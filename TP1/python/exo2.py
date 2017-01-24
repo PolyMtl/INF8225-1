@@ -1,0 +1,3 @@
+import BayesNetwork as bayes
+
+

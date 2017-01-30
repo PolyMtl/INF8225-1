@@ -300,7 +300,7 @@ class FunctionNode(Node):
         for valueId in msg.toNode.valuesId():
             # Pour chaque valeur de la variable du noeud destinataire, on calcul la somme des produits des messages
             sp = valueIni
-            ms = -float('inf')
+            ms = valueIni
 
             event = (msg.toNode.var == valueId) & knowing
             if not event.isValid:
@@ -309,12 +309,7 @@ class FunctionNode(Node):
                 continue
 
             for e in event.listVecEvents(self.neighboursBase):
-
-                if knowing == event:
-                    complement = pt.Event.eventFromSpace(e, self.neighboursBase) + (msg.toNode.var != valueId)
-                    f = sum(self.f(complement.listVecEvents(self.neighboursBase)))
-                else:
-                    f = self.f(e)
+                f = self.f(e)
 
                 if method >= 0:
                     f = math.log(f)
@@ -393,11 +388,8 @@ class VariableNode(Node):
         spData = []
         msData = []
 
-        method = -1
-        valueIni = 1
-        if methodName.startswith('exp'):
-            method = 0
-            valueIni = 0
+        storeAsLog = methodName.startswith('exp')
+        valueIni = 1 if not storeAsLog else 0
 
         for valueId in self.valuesId():
             # Pour chaque valeur de la variable du noeud on calcule le produit des messages
@@ -406,7 +398,7 @@ class VariableNode(Node):
             for m in self.msgsReceived:
                 if m is None or (m.fromNode is msg.toNode):
                     continue
-                if method < 0:
+                if not storeAsLog:
                     sp *= m.spData[valueId]
                     ms *= m.msData[valueId]
                 else:
@@ -422,9 +414,7 @@ class VariableNode(Node):
         spData = []
         msData = []
 
-        valueIni = 1
-        if methodName.startswith('exp'):
-            valueIni = 0
+        valueIni = 1 if not methodName.startswith('exp') else 0
 
         for i in range(len(self.var.values)):
             spData.append(valueIni)

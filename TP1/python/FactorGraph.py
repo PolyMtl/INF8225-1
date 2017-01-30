@@ -1,7 +1,8 @@
 import numpy as np
 import collections as col
 import math
-from abc import ABC, abstractmethod
+from graphviz import Digraph
+from matplotlib import scale
 
 import probatoolbox as pt
 import BayesNetwork as bnet
@@ -25,7 +26,7 @@ class Message(object):
         return str(self.fromNode) + " -> " + str(self.toNode)
 
 
-class Node(ABC):
+class Node(object):
 
     def __init__(self):
         self.neighbours = []
@@ -35,7 +36,7 @@ class Node(ABC):
         self.msgsReceivedCount = 0
         self.msgSent = None
         self.msgReturned = None
-        self.observedValuesId = set()
+        self.observedValueId = -1
         self.jobsDone = False
         self.msData = []
         self.spData = []
@@ -60,12 +61,15 @@ class Node(ABC):
             print("reset " + str(self))
         self.reset()
 
-        if self.observedValuesId:
+        if self.isObserved():
             return
 
         for n in self.neighbours:
             if n is not fromNode:
                 n.recursiveReset(self)
+
+    def isObserved(self):
+        return self.observedValueId != -1
 
     def addNeighbours(self, node):
         if node in self.neighbours:
@@ -101,14 +105,15 @@ class Node(ABC):
 
         return
 
-    def processMsgs(self, knowing=pt.Event(), method='base'):
+    def processMsgs(self, knowing, method='base'):
+
         ngbCount = len(self.neighbours)
 
         if self.jobsDone:
             return []
 
         if self.msgReturned is not None:
-            # Un message de retour à été reçu et doit être distribuer à tous les autres noeuds
+            # Un message de retour a ete recu et doit etre distribuer a tous les autres noeuds
             list = []
             for nodeId, outNode in enumerate(self.neighbours):
                 updateMsgSent = False
@@ -149,9 +154,9 @@ class Node(ABC):
 
         return [self.msgSent]
 
-    def processLeafMsgs(self, knowing=pt.Event(), method='base'):
+    def processLeafMsgs(self, knowing, method='base'):
 
-        if self.msgSent or (not self.observedValuesId and len(self.neighbours) != 1):
+        if self.msgSent or (not self.isObserved() and len(self.neighbours) != 1):
             return []
 
         self.jobsDone = True
@@ -169,17 +174,15 @@ class Node(ABC):
 
         return msgList
 
-    @abstractmethod
-    def computeMsgData(self, msg, knowing=pt.Event(), methodName='base'):
+    def computeMsgData(self, msg, knowing, methodName='base'):
         pass
 
-    @abstractmethod
-    def computeLeafMsgData(self, msg, knowing=pt.Event(), methodName='base'):
+    def computeLeafMsgData(self, msg, knowing, methodName='base'):
         pass
 
     def finishJob(self, methodName='base'):
 
-        if self.observedValuesId:
+        if self.isObserved():
             for msg in self.msgsReceived:
                 if msg is not None:
                     self.msData = msg.msData
@@ -201,15 +204,18 @@ class Node(ABC):
                 self.msData = [ms[0] * ms[1] for ms in msInput]
                 self.spData = [sp[0] * sp[1] for sp in spInput]
 
-        # Normalisation du sum product
+        # Normalisation
         s = sum(self.spData)
         self.spData = [sp / s for sp in self.spData]
+
+        s = sum(self.msData)
+        self.msData = [ms / s for ms in self.msData]
 
 
 class FunctionNode(Node):
 
     def __init__(self, proba, xNodes, graph):
-        super().__init__()
+        Node.__init__(self)
 
         self.graph = graph
 
@@ -217,7 +223,7 @@ class FunctionNode(Node):
         if isinstance(proba, float):
             proba = [proba]
 
-        # Conversion de la variable associée en liste si elle est seule et enregistrement des variables
+        # Conversion de la variable associee en liste si elle est seule et enregistrement des variables
         if isinstance(xNodes, FunctionNode):
             xNodes = [xNodes]
 
@@ -226,7 +232,7 @@ class FunctionNode(Node):
             x.addNeighbours(self)
             self.neighboursBase.append(x.var)
 
-        # Vérification de la dimension de proba
+        # Verification de la dimension de proba
         dimX = []
         globalDim = 1
         for x in xNodes:
@@ -234,9 +240,9 @@ class FunctionNode(Node):
             globalDim *= len(x.var.values)
         assert globalDim == proba.size
 
-        # Stockage des probabilités conditionnelles
+        # Stockage des probabilites conditionnelles
         self.proba = np.array(proba)
-        self.proba.shape = dimX
+        self.proba.shape = [_ for _ in reversed(dimX)]
 
     def __str__(self):
         defStr = "f(" + str(self.neighbours[0])
@@ -251,9 +257,9 @@ class FunctionNode(Node):
 
     def printDef(self):
         list = []
-        for event in pt.Event().listVecEvents(base=self.base()):
+        for event in pt.Event(subset=self.base()[0].subset).listVecEvents(base=self.base()):
             defStr = "p("
-            defStr += pt.Event().eventToStr(event, self.base())
+            defStr += pt.Event(subset=self.base()[0].subset).eventToStr(event, self.base())
             defStr += ") = " + str(self.f(event))
             list.append(defStr)
         return list
@@ -280,7 +286,7 @@ class FunctionNode(Node):
             p = p[e]
         return p
 
-    def computeMsgData(self, msg, knowing=pt.Event(), methodName='base'):
+    def computeMsgData(self, msg, knowing, methodName='base'):
         spData = []
         msData = []
 
@@ -347,12 +353,12 @@ class FunctionNode(Node):
         msg.spData = spData
         msg.msData = msData
 
-    def computeLeafMsgData(self, msg, knowing=pt.Event(), methodName='base'):
+    def computeLeafMsgData(self, msg, knowing, methodName='base'):
         self.computeMsgData(msg, knowing=knowing, methodName=methodName)
 
 class VariableNode(Node):
     def __init__(self, var, graph):
-        super().__init__()
+        Node.__init__(self)
         self.var = var
         self.graph = graph
 
@@ -376,14 +382,14 @@ class VariableNode(Node):
         return None
 
     def possibleValuesId(self):
-        if self.observedValuesId:
-            return self.observedValuesId
+        if self.isObserved():
+            return [self.observedValueId]
         return range(len(self.var.values))
 
     def valuesId(self):
         return range(len(self.var.values))
 
-    def computeMsgData(self, msg, knowing=pt.Event(), methodName='base'):
+    def computeMsgData(self, msg, knowing, methodName='base'):
         spData = []
         msData = []
 
@@ -412,7 +418,7 @@ class VariableNode(Node):
         msg.spData = spData
         msg.msData = msData
 
-    def computeLeafMsgData(self, msg, knowing=pt.Event(), methodName='base'):
+    def computeLeafMsgData(self, msg, knowing, methodName='base'):
         spData = []
         msData = []
 
@@ -429,13 +435,15 @@ class VariableNode(Node):
 
 
 class Graph(object):
-    def __init__(self, subset=pt.defaultSubset):
+    def __init__(self, subset=None):
+        if subset is None:
+            subset = pt.RandomVariableSubSet()
         self.fctNodes = []
         self.varNodes = []
         self.varMap = col.Counter()
         self.subset = subset
         self.isCompiled = None
-        self.knowing = pt.Event()
+        self.knowing = pt.Event(subset=subset)
 
     def createVar(self, name, values=[True, False]):
         self.isCompiled = None
@@ -444,6 +452,9 @@ class Graph(object):
         return var
 
     def addVar(self, var):
+        if var.subset is not self.subset:
+            return None
+
         self.isCompiled = None
         self.varMap[var] = len(self.varNodes)
         xNode = VariableNode(var, self)
@@ -467,7 +478,10 @@ class Graph(object):
         xNodes = []
         for x in connectedVar:
             if x not in self.varMap:
-                xNodes.append(self.addVar(x))
+                newVar = self.addVar(x)
+                if newVar is None:
+                    return None
+                xNodes.append(newVar)
             else:
                 xNodes.append(self.xNode(x))
         fNode = FunctionNode(proba, xNodes, graph=self)
@@ -487,7 +501,38 @@ class Graph(object):
         else:
             return defList
 
-    def compile(self, knowing=None, method="", verbose=None):
+    def addObserved(self, event):
+        newKnowing = self.knowing.replaceUnion(event)
+        if not newKnowing.isMarginalUnion():
+            print("Error: the observed variable should have a define value (not multiple possibilities)!")
+            return self.knowing
+        self.compile(knowing=newKnowing)
+        return newKnowing
+
+    def removeObserved(self, var):
+        newKnowing = self.knowing.copy()
+        newKnowing.space[self.subset.varIdMap[var]] = set([])
+        self.compile(knowing=newKnowing)
+
+
+    def resetGraph(self):
+        for n in self.varNodes + self.fctNodes:
+            n.reset()
+        self.isCompiled = None
+
+    def clearObserved(self):
+        self.compile(knowing=pt.Event(subset=self.subset))
+
+    def printObserved(self):
+        if self.knowing.isEmpty():
+            return ""
+        return self.knowing.printSimplified()
+
+    def compile(self, knowing=None, method="", verbose=None, resetAll=False):
+        if knowing is not None and not knowing.isMarginalUnion():
+            print("Error: the observed variable should have a define value (not multiple possibilities)!")
+            return False
+
         if verbose is None:
             verbose = defaultCompileVerbose
 
@@ -504,22 +549,27 @@ class Graph(object):
 
         if knowing is not None and knowing != self.knowing:
             for x in self.varNodes:
-                observedValuesId = knowing.constraintOnVar(x.var)
-                if observedValuesId != x.observedValuesId:
+                observedValueId = -1
+                if knowing.constraintOnVar(x.var):
+                    observedValueId = next(iter(knowing.constraintOnVar(x.var)))
+                if observedValueId != x.observedValueId:
                     self.isCompiled = None
-                    x.observedValuesId = set([])
+                    x.observedValueId = -1
                     x.reset(recursive=True)
-                    x.observedValuesId = observedValuesId
-            self.knowing = knowing
+                    x.observedValueId = observedValueId
+            self.knowing = knowing.copy()
         else:
             knowing = self.knowing
 
-        if self.isCompiled is not None:
-            return
+        if not resetAll and self.isCompiled is not None:
+                return True
 
         # Compute first messages if needed
         msgs = []
         for n in self.varNodes + self.fctNodes:
+            if resetAll:
+                n.reset()
+
             computedMsgs = n.processLeafMsgs(knowing=knowing, method=method)
             for m in computedMsgs:
                 msgs.append(m)
@@ -549,19 +599,32 @@ class Graph(object):
                 x.finishJob(methodName=method)
 
         self.isCompiled = method
+        return True
 
     def probaMarginal(self, var, value, knowing=None):
-        self.compile(knowing=knowing)
+        if not self.compile(knowing=knowing):
+            return float('nan')
 
         xNode = self.xNode(var)
         if isinstance(value, bool) or (not isinstance(value, int)):
             value = xNode.var.valInternalId[value]
 
-        try:
-            proba = xNode.spData[value]
-            return proba
-        except IndexError:
-            return float('inf')
+
+        proba = xNode.spData[value]
+        return proba
+
+    def p(self, event, knowing=None):
+        if knowing is None:
+            knowing = pt.Event(subset=self.subset)
+        if not event.isMarginal():
+            print("Error: event must correspond to a marginal probability")
+            return float('nan')
+        e = event.export()
+        var = e[0][0]
+        value = e[0][1][0]
+        return self.probaMarginal(var, value, knowing=knowing)
+
+
 
     def mostProbableConfiguration(self, knowing=None):
         self.compile(knowing=knowing)
@@ -580,8 +643,75 @@ class Graph(object):
             event &= e
             probability.append(max)
 
-        return [event.eventToStr(), probability]
+        return [event, probability]
 
+    def MPC(self, knowing=None, eventFormat='shortStr', withProbabilities=False):
+        mpc = self.mostProbableConfiguration(knowing)
+        if eventFormat=='vec' or eventFormat=='value' or eventFormat=='shortStr' or eventFormat=='str':
+            mpc[0] = [next(iter(set)) for set in mpc[0].space]
+            if eventFormat != 'vec':
+                mpc[0] = [self.subset.varList[varId].values[valId] for varId, valId in enumerate(mpc[0])]
+                if eventFormat=='shortStr':
+                    mpc[0] = [self.subset.varList[varId].printEqTo(val, shortStr=True) for varId, val in enumerate(mpc[0])]
+                if eventFormat == 'str':
+                    mpc[0] = [self.subset.varList[varId].printEqTo(val, shortStr=False) for varId, val in enumerate(mpc[0])]
+
+        if withProbabilities:
+            return mpc
+        else:
+            return mpc[0]
+
+    def drawGraph(self, show=False, rotate=False, engine='dot', size='', mpc=False):
+        # Init graph
+        dot = Digraph(comment='Factor Graph', engine=engine)
+        dot.edge_attr.update(arrowhead='none')
+        dot.graph_attr.update(rotation='-90'if rotate else '0')
+
+        # Update graph style
+        pointSize = 0.8
+        if engine=='sfdp':
+            if size=='':
+                size = '5,5'
+            dot.graph_attr.update(size=size)
+            pointSize = 4
+
+        penwidth = str(int(pointSize * 2.2))
+        dot.node_attr.update(penwidth=penwidth, fontsize=str(pointSize*18))
+        dot.edge_attr.update(penwidth=penwidth)
+
+        if mpc:
+            mpc = self.MPC(eventFormat='str')
+
+        # Draw variable nodes
+        for node in self.varNodes:
+            style = 'filled' if node.isObserved() else 'solid'
+            if mpc:
+                label = mpc[self.subset.varIdMap[node.var]]
+            else:
+                label = node.var.name if not node.isObserved() else node.var.printEqTo(node.observedValueId, shortStr=False)
+            dot.node(str(node), label=label, style=style, width=str(pointSize), height=str(pointSize*0.6))
+        # Draw function nodes
+        for node in self.fctNodes:
+            dot.node(str(node), shape="rect", style="filled", color="black", fixedsize="true", width=str(pointSize*0.7), height=str(pointSize*0.15), label="")
+
+        # Draw edges
+        currentNodes = [f for f in self.fctNodes if len(f.neighbours)==1]
+        processedNodes = set([])
+        while currentNodes:
+            nextNodes = set([])
+            for node in currentNodes:
+                processedNodes.add(node)
+                for child in node.neighbours:
+                    if child not in processedNodes:
+                        dot.edge(str(node), str(child))
+                        nextNodes.add(child)
+            currentNodes = list(nextNodes)
+
+        dot.render('output/factorGraph.gv', view=show)
+        return dot
+
+    def drawMPC(self, show=False, rotate=False, engine='dot', size=''):
+        return self.drawGraph(show=show, rotate=rotate, engine=engine, size=size, mpc=True)
 
 def graphFromBayesNet(bayesNet):
     """
@@ -595,6 +725,9 @@ def graphFromBayesNet(bayesNet):
 
     for n in bayesNet.nodes:
         varList = [e.var for e in n.parents] + [n.var]
-        graph.addFct(n.proba, varList)
+
+
+        f = graph.addFct(n.proba, varList)
+        # print(str(f) + " : " + str(n.proba))
 
     return graph

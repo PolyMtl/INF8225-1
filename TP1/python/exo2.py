@@ -1,24 +1,29 @@
+from tabulate import tabulate
 import BayesNetwork as bn
 import FactorGraph as fg
 
 bnet = bn.Network()
+bnet.defaultComputeMethod = "exp2"
 
-C = bnet.addNode("C", 0.001)
-T = bnet.addNode("T", 0.002)
-A = bnet.addNode("A", [0.95,0.94,0.29,0.001], parents=[T,C])
-M = bnet.addNode("M", [0.90,0.05], parents=A)
-J = bnet.addNode("J", [0.70,0.01], parents=A)
+C = bnet.createNode("C", 0.001)
+T = bnet.createNode("T", 0.002)
+A = bnet.createNode("A", [0.95, 0.94, 0.29, 0.001], parents=[T, C])
+M = bnet.createNode("M", [0.90, 0.05], parents=A)
+J = bnet.createNode("J", [0.70, 0.01], parents=A)
 
 graph = fg.graphFromBayesNet(bnet)
+graph.addObserved(A==True)
+graph.compile(method='exp')
 
-graph.compile(knowing=(A==True), method='exp')
+knowing = [(M==True)&(J==False), (M==False)&(J==True), (M==True)&(J==True), (M==False)&(J==False)]
+knowing+= [M==True, J==True]
 
+probas = []
+for k in knowing:
+    p = []
+    p.append("p( C=True | "+k.printSimplified()+")")
+    p.append(bnet.p(C==True, k))
+    p.append(graph.p(C==True, k))
+    probas.append(p)
 
-
-p1 = bnet.p(C==True, (M==True)&(J==False))
-p2 = bnet.p(C==True, (M==False)&(J==True))
-p3 = bnet.p(C==True, (M==True)&(J==True))
-p4 = bnet.p(C==True, (M==False)&(J==False))
-
-p5 = bnet.p(C==True, M==True)
-p6 = bnet.p(C==True, J==True)
+print(tabulate(probas, headers=['Proba', 'Bayes', 'SumProduct']))

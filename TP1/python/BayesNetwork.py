@@ -1,10 +1,10 @@
 import numpy as np
 import collections as col
 import math
+from graphviz import Digraph
+import matplotlib.pyplot as plt
 
 import probatoolbox as pt
-
-defaultComputeMethod = "brut"
 
 class VariableNode(object):
     def __init__(self, var, proba, network, parents=[] ):
@@ -19,7 +19,7 @@ class VariableNode(object):
             parents = [parents]
         self.parents = parents
 
-        # Vérification de la dimension de proba et du type des parents
+        # Verification de la dimension de proba et du type des parents
         dimProba = 1
         dimValues = len(var.values)
         dimList = []
@@ -29,7 +29,7 @@ class VariableNode(object):
         assert dimProba*(dimValues-1) == len(proba)
         dimList.append(dimValues)
 
-        # Calcul de la probabilité complémentaire
+        # Calcul de la probabilite complementaire
         probaCompl = []
         for i in range(0,dimProba):
             pCumul = sum(proba[i*(dimValues-1):(i+1)*(dimValues-1)])
@@ -37,9 +37,38 @@ class VariableNode(object):
         for p in probaCompl:
             proba.append(p)
 
-        # Stockage des probabilités conditionnelles
+        # Stockage des probabilites conditionnelles
         self.proba = np.array(proba)
-        self.proba.shape = dimList
+        self.proba.shape = [_ for _ in reversed(dimList)]
+
+        # Reordonnement des parents
+        if len(parents) > 1:
+            pMap = []
+            reorderedProba = []
+            reorderedDimList = []
+            reorderedParents = []
+            for var in network.subset.varList:
+                for parentId, p in enumerate(parents):
+                    if p.var is var:
+                        pMap.append(parentId)
+                        break
+            if pMap != [i for i in range(0, len(pMap))]:
+                pMap.append(len(pMap))
+                base = [parent.var for parent in parents]+[self.var]
+                for e in pt.Event(subset=network.subset).listVecEvents(base=base):
+                    p = self.proba
+                    for eId in reversed(pMap):
+                        p = p[e[eId]]
+                    reorderedProba.append(p)
+
+                for eId in pMap[:-1]:
+                    reorderedDimList.append(dimList[eId])
+                    reorderedParents.append(parents[eId])
+                reorderedDimList.append(len(var.values))
+
+                self.proba = np.array(reorderedProba)
+                self.proba.shape = [_ for _ in reversed(reorderedDimList)]
+                self.parents = reorderedParents
 
     def __str__(self):
         return self.var.name
@@ -53,7 +82,7 @@ class VariableNode(object):
                 parentBase = [e.var for e in self.parents]
                 for parentEvent in (self.var == value).listVecEvents(base=parentBase):
                     defStr = "p(" + self.var.printEqTo(value) + "|"
-                    defStr += pt.Event().eventToStr(parentEvent, parentBase)
+                    defStr += pt.Event(subset=self.net.subset).eventToStr(parentEvent, parentBase)
                     defStr += ") = " + str(self.probaAt(parentEvent + [valId]))
                     list.append(defStr)
 
@@ -79,10 +108,14 @@ class VariableNode(object):
 
 class Network(object):
 
-    def __init__(self, subset=pt.defaultSubset):
+    def __init__(self, subset=None):
+        if subset is None:
+            subset = pt.RandomVariableSubSet()
         self.nodes = []
         self.nodesMap = col.Counter()
         self.subset = subset
+        self.isCompile = False
+        self.defaultComputeMethod = "brut"
 
     def __str__(self):
         defStr = "BayesNetwork["
@@ -96,20 +129,39 @@ class Network(object):
     def node(self, var):
         return self.nodes[self.nodesMap[var]]
 
-    def addNode(self, name, proba, parents=[], values=[True, False]):
+    def createNode(self, name, proba, parents=[], values=[True, False]):
         if isinstance(parents, VariableNode) or isinstance(parents, pt.RandomVariable):
             parents = [parents]
-
         for i, var in enumerate(parents):
             if isinstance(var, pt.RandomVariable):
                 parents[i] = self.node(var)
 
-        var = pt.RandomVariable(name, values=values, subset=self.subset)
-        node = VariableNode(var, proba, self, parents=parents)
-        self.nodesMap[var] = len(self.nodes)
-        self.nodes.append(node)
+        var = None
+        previousNode = None
+        for nodeId, node in enumerate(self.nodes):
+            if node.var.name == name:
+                var = node.var
+                previousNode = node
+                break
 
+        if var is None:
+            var = pt.RandomVariable(name, values=values, subset=self.subset)
+
+        node = VariableNode(var, proba, self, parents=parents)
+        if previousNode is None:
+            self.nodesMap[var] = len(self.nodes)
+            self.nodes.append(node)
+        else:
+            self.nodes[self.nodesMap[var]] = node
+            for n in self.nodes:
+                for parentId, parent in enumerate(n.parents):
+                    if parent is previousNode:
+                        n.parents[parentId] = node
+                        break
         return var
+
+    def printDef(self):
+        return [n.printDef() for n in self.nodes]
 
     def distribution(self, base=[], legendNeeded=False):
         if not base:
@@ -117,8 +169,8 @@ class Network(object):
 
         list = []
         legend = []
-        for event in pt.Event(subset=self).listEvents(base=base):
-            list.append(event.p())
+        for event in pt.Event(subset=self.subset).listEvents(base=base):
+            list.append(self.p(event))
             if legendNeeded:
                 legend.append(event.eventToStr(base=base))
 
@@ -131,7 +183,7 @@ class Network(object):
         if not event.isValid:
             return 0
         if method == "":
-            method = defaultComputeMethod
+            method = self.defaultComputeMethod
         if not knowing:
             return self.computeInconditionnalProbability(event, method=method)
         else:
@@ -144,7 +196,7 @@ class Network(object):
     def computeInconditionnalProbability(self, event, method=""):
 
         if method == "":
-            method = defaultComputeMethod
+            method = self.defaultComputeMethod
 
         proba = 0
 
@@ -163,11 +215,11 @@ class Network(object):
 
             for e in event.listEvents()[1:]:
                 lnPVar = 0
-                # Calcul probabilité jointe
+                # Calcul probabilite jointe
                 for varNode in self.nodes:
                     lnPVar += math.log(varNode.probaAt(e))
 
-                # Ajout à la somme de probabilité
+                # Ajout q la somme de probabilite
                 if expAlgo == 0:        # somme directe
                     proba += math.exp(lnPVar)
                 elif expAlgo == 1:      # lnSum + ln( 1 + (pVar - sum) )
@@ -185,3 +237,34 @@ class Network(object):
                 pVar *= varNode.probaAt(e)
             proba += pVar
         return proba
+
+    def drawGraph(self, observed=[], show=False):
+        dot = Digraph(comment='Bayes Network')
+        for node in self.nodes:
+            style = 'filled' if node.var in observed else 'solid'
+            dot.node(node.var.name, style=style)
+            dot.edge_attr.update(dir='back')
+
+        for child in self.nodes:
+            for parent in child.parents:
+                dot.edge( parent.var.name, child.var.name)
+        dot.render('output/bayesNet.gv', view=show)
+        return dot
+
+    def drawDistribution(self, show=False):
+        dist = self.distribution(legendNeeded=True)
+        fig, ax = plt.subplots(figsize=(15, 6))
+
+        x = np.arange(len(dist[0]))
+        width = 1 / 1.5
+        ax.bar(x, dist[0], width, color="#1295DB", linewidth=0)
+        plt.axis([0, len(dist[0]), 0, 1])
+        ax.set_xticks(x + width / 2)
+        ax.set_xticklabels(dist[1], rotation=90)
+
+        ax.set_title("Distribution")
+        plt.xlabel("Evenement")
+        plt.ylabel("Probability")
+
+        # if show:
+        #     plt.show()

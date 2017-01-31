@@ -53,19 +53,18 @@ class Node(object):
         self.spData = []
 
     def recursiveReset(self, fromNode=None, alreadyReset=None):
-        self.reset()
         if self.isObserved():
             for nId, n in enumerate(self.neighbours):
                 if n is fromNode:
                     self.msgsSent[nId] = None
         else:
+            self.reset()
             if alreadyReset is None:
                 alreadyReset = set([])
             alreadyReset.add(self)
-
-            for nId, n in enumerate(self.neighbours):
-                if n not in alreadyReset:
-                    n.recursiveReset(self, alreadyReset)
+            for node in self.neighbours:
+                if node not in alreadyReset:
+                    node.recursiveReset(self, alreadyReset)
 
     def isObserved(self):
         return self.observedValueId != -1
@@ -126,7 +125,6 @@ class Node(object):
         pass
 
     def finishJob(self, methodName='base'):
-
         msg1 = self.msgsSent[0]
         msg2 = self.msgsReceived[0]
         i = 1

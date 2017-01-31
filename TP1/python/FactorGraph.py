@@ -33,40 +33,39 @@ class Node(object):
         self.idInNeighbours = []
 
         self.msgsReceived = []
-        self.msgsReceivedCount = 0
-        self.msgSent = None
-        self.msgReturned = None
+        self.msgsReceivedCount = []
+        self.msgsSent = []
         self.observedValueId = -1
-        self.jobsDone = False
         self.msData = []
         self.spData = []
         self.reset()
 
     def reset(self, recursive=False):
         if recursive:
-            self.recursiveReset(self)
+            self.recursiveReset()
             return
 
         for i in range(len(self.msgsReceived)):
             self.msgsReceived[i] = None
-        self.msgsReceivedCount = 0
-        self.msgSent = None
-        self.msgReturned = None
-        self.jobsDone = False
+            self.msgsReceivedCount[i] = 0
+            self.msgsSent[i] = None
         self.msData = []
         self.spData = []
 
-    def recursiveReset(self, fromNode=None):
-        if defaultCompileVerbose:
-            print("reset " + str(self))
+    def recursiveReset(self, fromNode=None, alreadyReset=None):
         self.reset()
-
         if self.isObserved():
-            return
+            for nId, n in enumerate(self.neighbours):
+                if n is fromNode:
+                    self.msgsSent[nId] = None
+        else:
+            if alreadyReset is None:
+                alreadyReset = set([])
+            alreadyReset.add(self)
 
-        for n in self.neighbours:
-            if n is not fromNode:
-                n.recursiveReset(self)
+            for nId, n in enumerate(self.neighbours):
+                if n not in alreadyReset:
+                    n.recursiveReset(self, alreadyReset)
 
     def isObserved(self):
         return self.observedValueId != -1
@@ -81,106 +80,60 @@ class Node(object):
         idInSelf = len(self.neighbours)
         self.neighbours.append(node)
         self.msgsReceived.append(None)
+        self.msgsSent.append(None)
+        self.msgsReceivedCount.append(0)
 
         # Add self in neighbour list
         idInNeighbour = len(node.neighbours)
         node.neighbours.append(self)
         node.msgsReceived.append(None)
+        node.msgsSent.append(None)
+        node.msgsReceivedCount.append(0)
 
         # Aknowledge ids
         self.idInNeighbours.append(idInNeighbour)
         node.idInNeighbours.append(idInSelf)
 
     def receiveMsg(self, msg):
-        if self.msgsReceived[msg.fromId] is not None:
-            if defaultCompileVerbose:
-                print(str(msg.toNode)+" already received a message from "+str(msg.fromNode)+", message ignored...")
-            return
-
         self.msgsReceived[msg.fromId] = msg
-        self.msgsReceivedCount += 1
-
-        if len(self.neighbours) - self.msgsReceivedCount == 0:
-            self.msgReturned = msg
-
+        for i in range(len(self.msgsReceivedCount)):
+            if i != msg.fromId:
+                self.msgsReceivedCount[i] += 1
         return
 
     def processMsgs(self, knowing, method='base'):
+        if self.isObserved():
+            return []
 
         ngbCount = len(self.neighbours)
-
-        if self.jobsDone:
-            return []
-
-        if self.msgReturned is not None:
-            # Un message de retour a ete recu et doit etre distribuer a tous les autres noeuds
-            list = []
-            for nodeId, outNode in enumerate(self.neighbours):
-                updateMsgSent = False
-                if nodeId == self.msgReturned.fromId:
-                    if self.msgSent is None:
-                        updateMsgSent = True
-                    else:
-                        continue    # Sauter l'emmeteur du message
-
-                idForOutNode = self.idInNeighbours[nodeId]
-
-                msg = Message(self, idForOutNode, outNode)
-                self.computeMsgData(msg, knowing=knowing, methodName=method)
-
-                list.append(msg)
-                if updateMsgSent:
-                    self.msgSent = msg
-            self.jobsDone = True
-            return list
-
-        if self.msgSent is not None or ngbCount - self.msgsReceivedCount > 1:
-            # On doit toujours attendre des messages des noeuds voisins...
-            return []
-
         msgs = []
-        # Recherche du noeud qui n'a pas encore transmis de message
-        outNode = None
-        idForOutNode = -1
-        for i, m in enumerate(self.msgsReceived):
-            if not m:
-                outNode = self.neighbours[i]
-                idForOutNode = self.idInNeighbours[i]
 
-        msg = Message( self, idForOutNode, outNode)
-        self.computeMsgData(msg, knowing=knowing, methodName=method)
-
-        self.msgSent = msg
-
-        return [self.msgSent]
+        for outId, receivedCount in enumerate(self.msgsReceivedCount):
+            if receivedCount >= ngbCount-1:
+                # Si tous les messages ont été reçus on peut envoyer le noeud
+                msg = Message(self, self.idInNeighbours[outId], self.neighbours[outId])
+                self.computeMsgData(msg, knowing=knowing, methodName=method)
+                self.msgsSent[outId] = msg
+                msgs.append(msg)
+                # On décrémente de 1 le nombre de message nécessaire avant de renvoyer un message dans cette direction
+                self.msgsReceivedCount[outId] -= 1
+        return msgs
 
     def processLeafMsgs(self, knowing, method='base'):
-
-        if self.msgSent or (not self.isObserved() and len(self.neighbours) != 1):
-            return []
-
-        self.jobsDone = True
-
-        msgList = []
-        for i, neigbour in enumerate(self.neighbours):
-            outNode = neigbour
-            idForOutNode = self.idInNeighbours[i]
-
-            msg = Message(self, idForOutNode, outNode)
-            self.computeLeafMsgData(msg, knowing=knowing, methodName=method)
-
-            self.msgSent = msg
-            msgList.append(msg)
-
-        return msgList
+        return self.processMsgs(knowing=knowing, method=method)
 
     def computeMsgData(self, msg, knowing, methodName='base'):
         pass
 
-    def computeLeafMsgData(self, msg, knowing, methodName='base'):
-        pass
-
     def finishJob(self, methodName='base'):
+
+        msg1 = self.msgsSent[0]
+        msg2 = self.msgsReceived[0]
+        i = 1
+        while msg1 is None or msg2 is None and i < len(self.msgsReceived):
+            msg1 = self.msgsSent[i]
+            msg2 = self.msgsReceived[i]
+            i += 1
 
         if self.isObserved():
             for msg in self.msgsReceived:
@@ -191,9 +144,9 @@ class Node(object):
                         self.msData = [math.exp(e) for e in self.msData]
                         self.spData = [math.exp(e) for e in self.spData]
         else:
-            r = range(len(self.msgReturned.msData))
-            msInput = [[self.msgReturned.msData[i], self.msgSent.msData[i]] for i in r]
-            spInput = [[self.msgReturned.spData[i], self.msgSent.spData[i]] for i in r]
+            r = range(len(msg2.msData))
+            msInput = [[msg2.msData[i], msg1.msData[i]] for i in r]
+            spInput = [[msg2.spData[i], msg1.spData[i]] for i in r]
 
             if methodName.startswith('exp'):
                 msData = [ms[0] + ms[1] for ms in msInput]
@@ -207,7 +160,6 @@ class Node(object):
         # Normalisation
         s = sum(self.spData)
         self.spData = [sp / s for sp in self.spData]
-
         s = sum(self.msData)
         self.msData = [ms / s for ms in self.msData]
 
@@ -348,9 +300,6 @@ class FunctionNode(Node):
         msg.spData = spData
         msg.msData = msData
 
-    def computeLeafMsgData(self, msg, knowing, methodName='base'):
-        self.computeMsgData(msg, knowing=knowing, methodName=methodName)
-
 class VariableNode(Node):
     def __init__(self, var, graph):
         Node.__init__(self)
@@ -410,18 +359,24 @@ class VariableNode(Node):
         msg.spData = spData
         msg.msData = msData
 
-    def computeLeafMsgData(self, msg, knowing, methodName='base'):
-        spData = []
-        msData = []
-
-        valueIni = 1 if not methodName.startswith('exp') else 0
-
-        for i in range(len(self.var.values)):
-            spData.append(valueIni)
-            msData.append(valueIni)
-
-        msg.spData = spData
-        msg.msData = msData
+    def processLeafMsgs(self, knowing, method='base'):
+        if self.isObserved():
+            msgs = []
+            for outId, sentMsg in enumerate(self.msgsSent):
+                if sentMsg is None:
+                    msg = Message(self, self.idInNeighbours[outId], self.neighbours[outId])
+                    if not method.startswith('exp'):
+                        data = [1 if _ == self.observedValueId else 0 for _ in range(len(self.var.values))]
+                    else:
+                        data = [0 if _ == self.observedValueId else -float('inf') for _ in
+                                range(len(self.var.values))]
+                    msg.msData = data
+                    msg.spData = data
+                    msgs.append(msg)
+                    self.msgsSent[outId] = msg
+            return msgs
+        else:
+            return self.processMsgs(knowing=knowing, method=method)
 
 
 class Graph(object):
@@ -598,7 +553,6 @@ class Graph(object):
         xNode = self.xNode(var)
         if isinstance(value, bool) or (not isinstance(value, int)):
             value = xNode.var.valInternalId[value]
-
 
         proba = xNode.spData[value]
         return proba

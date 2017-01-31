@@ -3,20 +3,23 @@ digraph {
 	graph [rotation=0]
 	node [fontsize=14.4 penwidth=1]
 	edge [arrowhead=none penwidth=1]
-		c1 [label=c1 height=0.48 style=solid width=0.8]
-		c2 [label=c2 height=0.48 style=solid width=0.8]
-		c3 [label=c3 height=0.48 style=solid width=0.8]
-		c4 [label=c4 height=0.48 style=solid width=0.8]
-		"f(c1)" [label="" color=black fixedsize=true height=0.12 shape=rect style=filled width=0.5599999999999999]
-		"f(c1,c2)" [label="" color=black fixedsize=true height=0.12 shape=rect style=filled width=0.5599999999999999]
-		"f(c1,c3)" [label="" color=black fixedsize=true height=0.12 shape=rect style=filled width=0.5599999999999999]
-		"f(c2,c3,c4)" [label="" color=black fixedsize=true height=0.12 shape=rect style=filled width=0.5599999999999999]
-			"f(c1)" -> c1
-			c1 -> "f(c1,c2)"
-			c1 -> "f(c1,c3)"
-			"f(c1,c3)" -> c3
-			"f(c1,c2)" -> c2
-			c2 -> "f(c2,c3,c4)"
-			c3 -> "f(c2,c3,c4)"
-			"f(c2,c3,c4)" -> c4
+		C [label="C=False" height=0.48 style=filled width=0.8]
+		T [label="T=False" height=0.48 style=solid width=0.8]
+		A [label="A=True" height=0.48 style=filled width=0.8]
+		M [label="M=True" height=0.48 style=solid width=0.8]
+		J [label="J=True" height=0.48 style=solid width=0.8]
+		"f(C)" [label="" color=black fixedsize=true height=0.12 shape=rect style=filled width=0.5599999999999999]
+		"f(T)" [label="" color=black fixedsize=true height=0.12 shape=rect style=filled width=0.5599999999999999]
+		"f(C,T,A)" [label="" color=black fixedsize=true height=0.12 shape=rect style=filled width=0.5599999999999999]
+		"f(A,M)" [label="" color=black fixedsize=true height=0.12 shape=rect style=filled width=0.5599999999999999]
+		"f(A,J)" [label="" color=black fixedsize=true height=0.12 shape=rect style=filled width=0.5599999999999999]
+			"f(C)" -> C
+			"f(T)" -> T
+			T -> "f(C,T,A)"
+			C -> "f(C,T,A)"
+			"f(C,T,A)" -> A
+			A -> "f(A,M)"
+			A -> "f(A,J)"
+			"f(A,J)" -> J
+			"f(A,M)" -> M
 }

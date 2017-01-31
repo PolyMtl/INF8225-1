@@ -12,8 +12,10 @@ M = bnet.createNode("M", [0.90, 0.05], parents=A)
 J = bnet.createNode("J", [0.70, 0.01], parents=A)
 
 graph = fg.graphFromBayesNet(bnet)
-graph.addObserved(A==True)
 graph.compile(method='exp')
+
+graph.addObserved(A==True)
+
 
 knowing = [(M==True)&(J==False), (M==False)&(J==True), (M==True)&(J==True), (M==False)&(J==False)]
 knowing+= [M==True, J==True]

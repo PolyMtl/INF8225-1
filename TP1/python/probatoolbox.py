@@ -34,10 +34,14 @@ class RandomVariableSubSet(object):
                 space.append(spaceValue[v])
         return space
 
-    def expandSpace(self, spaceValue, fromVariables):
-        space = []
-        for s in self.space:
-            space.append(s.copy())
+    def expandSpace(self, spaceValue, fromVariables, defaultSpace=None):
+        if defaultSpace is not None and len(defaultSpace)==len(self.space):
+            space = []
+            for s in defaultSpace:
+                space.append(s.copy())
+        else:
+            space = [set([]) for _ in self.space]
+
         for i, v in enumerate(fromVariables):
             if isinstance(v, RandomVariable):
                 v = self.varIdMap[v]
@@ -178,7 +182,7 @@ class Event(object):
                     r += " & "
 
                 r += var.name
-                if len(self.space[varId]) <= len(compSpace[varId]):
+                if len(self.space[varId]) <= len(compSpace[varId]) or not compSpace[varId]:
                     r += "="
                     space = self.space[varId]
                 else:
@@ -231,6 +235,18 @@ class Event(object):
                 return None
         return to
 
+    @staticmethod
+    def trueSpaceIntersect(to, other):
+        for i, s in enumerate(other):
+            if not s or not to[i]:
+                to[i] = set([])
+                continue
+
+            to[i] = to[i] & s
+            if not to[i]:
+                to[i] = set([])
+        return to
+
 
     def __add__(self, other):
         if not self.checkOperation(other):
@@ -253,9 +269,10 @@ class Event(object):
 
     def __iadd__(self, other):
         if not self.checkOperation(other):
-            return
+            return self
         if Event.spaceUnion(self.space, other.space, self.subset.space) is None:
             self.isValid = False
+        return self
 
     def __sub__(self, other):
         if not self.checkOperation(other):
@@ -275,6 +292,11 @@ class Event(object):
             return self.__copy__()
         return Event(Event.spaceReplaceUnion(self.space.copy(), other.space, self.subset.space), subset=self.subset)
 
+    def trueIntersect(self, other):
+        if not self.checkOperation(other):
+            return self.__copy__()
+        return Event(Event.trueSpaceIntersect(self.space.copy(), other.space), subset=self.subset)
+
     def checkOperation(self, other):
         return self.subset is other.subset and self.isValid and other.isValid
 
@@ -287,7 +309,7 @@ class Event(object):
 
     def listVecEvents(self, base=None, replaceIdWithCounter=False):
         if base is None or not base:
-            space = self.space
+            space = self.space.copy()
         else:
             # Generation du sous-espace space issue de self.space
             space = self.subset.extractSpace(self.space, base)
@@ -365,12 +387,10 @@ class Event(object):
         return list
 
     def listMarginalUnionEvents(self):
-        base = []
-        for varId, varSet in enumerate(self.space):
-            if varSet:
-                base.append(varId)
-
-        return self.listEvents(base=base)
+        events = []
+        for variables in self.export():
+            events.append(variables[0] == variables[1])
+        return events
 
     def listStrEvents(self, base=[]):
         if not base:
@@ -408,7 +428,7 @@ class Event(object):
     def isMarginal(self):
         constraintFound = False
         for s in self.space:
-            if s is None or len(s)>1:
+            if s is None:
                 return False
             elif s:
                 if constraintFound:
@@ -417,8 +437,10 @@ class Event(object):
         return constraintFound
 
     def isMarginalUnion(self):
+        if not self.isValid:
+            return False
         for s in self.space:
-            if s is None or len(s) > 1:
+            if s is None:
                 return False
         return True
 

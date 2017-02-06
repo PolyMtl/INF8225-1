@@ -1,0 +1,345 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%      General Purpose Packages      %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[cyr]{aeguill}
+\RequirePackage{textcomp}
+\RequirePackage{graphicx}
+\RequirePackage[french]{babel}
+
+\RequirePackage{fancyhdr}
+\RequirePackage{textpos}
+\RequirePackage{lastpage}
+\RequirePackage{color}
+\RequirePackage{enumerate}
+\RequirePackage[colorlinks=true]{hyperref}
+\RequirePackage[all]{hypcap}
+
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{array}
+
+\RequirePackage{epstopdf}
+
+\RequirePackage{listings}
+\RequirePackage{xcolor}
+\RequirePackage{verbatim}
+\RequirePackage{gensymb}
+\RequirePackage[final]{pdfpages}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%          Custom Colors             %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\definecolor{bleu_poly}{RGB}{65,170,230}
+\definecolor{vert_poly}{RGB}{140,200,60}
+\definecolor{orange_poly}{RGB}{250,150,30}
+\definecolor{rouge_poly}{RGB}{185,30,50}
+\definecolor{gris_poly}{RGB}{166,168,171}
+
+\definecolor{colorBack1}{RGB}{247,247,252}
+\definecolor{colorBack2}{RGB}{240,240,247}
+\definecolor{codeGreen}{RGB}{19,129,19}
+\definecolor{codeAppleGreen}{RGB}{142,208,0}
+\definecolor{codeOrange}{rgb}{1.0,0.4,0}
+\definecolor{codePurple}{RGB}{59,8,137}
+\definecolor{codeDark1}{RGB}{36,36,50}
+\definecolor{codeDark1bis}{RGB}{34,34,34}
+\definecolor{codeDark2}{RGB}{83,83,95}
+\definecolor{codeDark3}{RGB}{95,95,95}
+
+\definecolor{headerBack1}{RGB}{234,236,247}
+\definecolor{headerBack2}{RGB}{250,250,253}
+\definecolor{headerColor}{RGB}{63,80,99}	
+\definecolor{borderColor}{RGB}{221,221,221}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%          Custom Layout             %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%      Custom Commands & Packages    %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Math environment %%
+\RequirePackage{float}
+\RequirePackage{mathtools}
+
+\newcommand{\mat}[1]{\begin{bmatrix} #1 \end{bmatrix}}
+\newcommand{\sys}[1]{\begin{cases} #1 \end{cases}}
+\newcommand{\res}[1]{\Aboxed{#1}}
+\newcommand{\eqRes}[1]{\eq{\Aboxed{#1}}}
+\newcommand{\eq}[1]{\vspace{-.7em}\begin{align*} #1 \end{align*}}
+\newcommand{\ta}[1]{\begin{tabular}{l|r} #1 \end{tabular}}
+\newcommand{\parth}[1]{\left( #1 \right) }
+\renewcommand{\thesubsubsection}{\alph{subsubsection})}
+\DeclareMathOperator{\sign}{sign}
+
+
+\newcommand{\vb}[1]{\mathbf{#1}}
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+
+\newcommand{\trans}{^\intercal}
+\newcommand{\zero}[2]{0_{#1 \times #2}}
+\newcommand{\gtrH}{\underset{\tiny\mbox{H0}}{\overset{\tiny\mbox{H1}}{\gtrless}} }
+\newcommand{\lessH}{\underset{\tiny\mbox{H0}}{\overset{\tiny\mbox{H1}}{\glessgtr}} }
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}
+\newcommand{\sqNorm}[1]{\norm{#1}^2}
+\newcommand{\sqAbs}[1]{\abs{#1}^2}
+\DeclareMathOperator{\ReelSymbol}{\mathfrak{Re}}
+\newcommand{\Reel}[1]{\ReelSymbol \left( #1 \right)}
+
+\newcommand{\eqLabel}[1]{\stepcounter{equation}\tag{\theequation}\label{#1}}
+\newcommand{\EqNote}[1]{\hfill {\footnotesize (#1) }}
+
+\newcommand{\simplify}[1]{ {\color{codeDark2}#1} }
+
+%%  Images  %%
+\setlength{\abovecaptionskip}{-10pt}
+\newcommand{\imgOption}[4]
+{
+	\begin{figure}[ht]
+		\makebox[\textwidth][c]{ \includegraphics[#2]{#1} }
+		\caption{#3}
+		\label{#4}
+	\end{figure}
+}
+\newcommand{\img}[3] {\imgOption{#1}{width=1.2\columnwidth}{#2}{#3}}
+\newcommand{\imgW}[4] {\imgOption{#1}{width=#4\columnwidth}{#2}{#3}}
+\newcommand{\simpleImg}[1]
+{
+  \includegraphics[width=0.82\columnwidth]{#1}
+}
+
+\RequirePackage{capt-of}
+\newcommand{\imgFixed}[4]
+{
+  \begingroup
+  \centering
+  \makebox[\textwidth][c]{ \includegraphics[width=#4\columnwidth]{#1} }
+  \captionof{figure}{#2}\label{#3}
+  \endgroup
+}
+
+\RequirePackage{tikz}
+\newcommand{\diaImport}[4]{
+\begin{figure}[hb]
+	\begin{center}
+		\makebox[\textwidth][c]{
+		\resizebox{#4\textwidth}{!}{%
+			
+			\input{Figures/#1.tex}
+		}
+	}
+	\end{center}
+	\caption[]{\label{#2} #3}
+\end{figure}
+}
+
+%% Table %%
+\RequirePackage{tabularx}
+\RequirePackage{colortbl}
+\newcolumntype{'}{!{\color{borderColor}\vrule}}
+\newcolumntype{R}{>{\centering\arraybackslash}X}
+\newcolumntype{H}{>{\color{red}\arraybackslash}}
+
+
+
+\newenvironment{customTable}[1]
+{
+  \newcommand{\vHead}[1]{ \cellcolor{headerBack2} \bf{\color{headerColor}\sffamily ##1} }
+  \newcommand{\hHead}[1]{ \cellcolor{headerBack1} \bf{\color{headerColor}\sffamily ##1} }
+  \newcommand{\rEnd}{\\ \hline}
+  \tabularx{\textwidth}{#1}
+    \arrayrulecolor{borderColor}
+    \color{codeDark1bis}
+    \ttfamily
+}
+{
+  \endtabularx
+}
+
+%% Multi column %%
+\RequirePackage{multicol}
+\setlength{\columnsep}{7mm}
+
+\newcommand{\imgMulti}[3]
+{
+    \begingroup
+    \centering
+    \includegraphics[width=1.15\columnwidth]{#1}
+    \captionof{figure}{#2}\label{#3}
+    \endgroup
+}
+
+%% Codes %%
+\newcommand{\sample}[1]	{\vspace{-0.2em}\begin{center}\colorbox{colorBack1}{\begin{minipage}[t]{0.97\columnwidth} {\small \texttt{#1}}\end{minipage}}\end{center}}
+
+\newcommand{\codeComment}[1]{\vspace{0.2em} \hfill {\color{codeDark2} \scriptsize\texttt{#1}} \vspace{-0.60em}}
+\newcommand{\codeSource}[1]{\codeComment{\emph{source:} #1}}
+
+\lstdefinestyle{customPy}{
+		numbers=left,                   % where to put the line-numbers
+		numberstyle=\tiny \ttfamily \color{codeDark2},      % the size of the fonts that are used for the line-numbers
+		numbersep=5pt,                  % how far the line-numbers are from the code
+		tabsize=4,          % sets default tabsize to 2 spaces
+		captionpos=b,           % sets the caption-position to bottom$
+		backgroundcolor=\color{colorBack2},  % choose the background color. You must add \usepackage{color}
+		basicstyle=\footnotesize \ttfamily \color{codeDark2},
+		keywordstyle=\color{codeOrange},
+		commentstyle=\color{codeGreen},
+		identifierstyle=\color{codeDark1},
+		stringstyle =\color{codeAppleGreen},
+		showstringspaces=false,
+		moredelim=**[is][\bfseries \color{codePurple}]{$}{$}
+}
+
+\lstnewenvironment{Py}[1][]
+{
+	\lstset { %
+		language=Python,                % choose the language of the code
+		style = customPy,
+		extendedchars=true
+	}
+}
+{}
+
+\newcommand{\importPy}[3]{
+  \lstinputlisting[style=customPy, firstline=#2, lastline=#3, language=Python, firstnumber=#2,extendedchars=true]{#1}
+}
+
+\newcommand{\inPy}[1]{{\ttfamily\small\color{codeDark1}#1}}
+
+\newcommand{\outPy}[1]	{\vspace{-1.5em}\begin{center}\colorbox{colorBack1}{\begin{minipage}[t]{0.97\columnwidth} {\small \color{codeDark2} \texttt{#1}}\end{minipage}}\end{center}}
+
+
+%% Layouts %%
+\newcommand{\emptysubsection}{
+  \subsection{}
+  \vspace{-1.92em}\hspace{3em} 
+  }
+\RequirePackage{titlesec}
+\renewcommand{\thesubsection}{\arabic{subsection}.}
+\renewcommand{\thesection}{}
+
+
+\newcommand{\qTitle}[3]{
+	\subsubsection*{ \hspace{-0.5em}{\footnotesize \textsc{Lab\##1}}, #2 \hspace{0.5em} #3}
+	}
+	
+\newcommand{\tab}{\hspace*{1em}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%      Polytechnique Style           %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\oddsidemargin 0pt
+\topmargin 0pt
+\textwidth 6.5in
+\textheight 8.1in
+
+
+\newcommand{\session}{Hiver 2017}
+\newcommand{\firstauthor}{Author}
+\newcommand{\firstregistrationnumber}{0000000}
+\newcommand{\reportnumber}{1}
+\newcommand{\firsttitle}{}
+\newcommand{\secondtitle}{}
+
+\newcommand{\prepareTitles}{
+	\title{}
+	
+	
+	\title{\vspace{-2.5cm} \noindent\makebox[\linewidth]{\color{rouge_poly}{\rule{\textwidth}{1.5pt}}}
+		\begin{center}
+			\begin{tabular}{m{6.5cm}m{6cm}}
+				\textbf{ \huge Laboratoire \#\reportnumber}  & \includegraphics[width=0.4\textwidth]{logo_polytechnique.eps}
+			\end{tabular}
+		\end{center}
+		\noindent\makebox[\linewidth]{\color{rouge_poly}{\rule{\textwidth}{1.5pt}}}
+		~ \\ ~ \\
+		\Huge \firsttitle ~ \\ \secondtitle  
+		~ \\ ~ \\
+		\LARGE INF8225 - Intelligence artificielle : techniques probabilistes et d’apprentissage 
+	}
+	
+	
+	\author{\session \\ Département de génie Informatique \\ École Polytechnique de Montréal}
+	
+	\date{Dernière mise à  jour: \today}
+	
+	\pagestyle{fancy}
+	
+	\lfoot{\session}
+	\cfoot{INF8225 - Intelligence artificielle}
+	\rfoot{\thepage/\pageref{LastPage}}
+	\chead{}
+	\lhead{\emph{LAB\#\reportnumber -- \firstauthor  \, (\firstregistrationnumber)}}
+	\rhead{\includegraphics[width=2.5cm]{logo_polytechnique.eps}}
+	\renewcommand{\headrulewidth}{0.4pt}
+	\renewcommand{\footrulewidth}{0.4pt} 
+	\setlength{\headheight}{45pt}
+}
+
+\newcommand{\maketitlepage}{
+	\maketitle
+	\noindent\makebox[\linewidth]{\color{rouge_poly}{\rule{\textwidth}{1.5pt}}} 
+	\noindent \LARGE \firstauthor  \hfill \firstregistrationnumber
+	
+	\noindent\makebox[\linewidth]{\color{rouge_poly}{\rule{\textwidth}{1.5pt}}}
+	
+	
+	\newpage
+	\normalsize
+}
+
+\setlength\parindent{0pt}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%           Import lines             %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\makeatletter
+\newread\pin@file
+\newcounter{pinlineno}
+\newcommand\pin@accu{}
+\newcommand\pin@ext{pintmp}
+% inputs #3, selecting only lines #1 to #2 (inclusive)
+\newcommand*\readLines [3] {%
+	\IfFileExists{#3}{%
+		\openin\pin@file #3
+		% skip lines 1 to #1 (exclusive)
+		\setcounter{pinlineno}{1}
+		\@whilenum\value{pinlineno}<#1 \do{%
+			\read\pin@file to\pin@line
+			\stepcounter{pinlineno}%
+		}
+		% prepare reading lines #1 to #2 inclusive
+		\addtocounter{pinlineno}{-1}
+		\let\pin@accu\empty
+		\begingroup
+		\endlinechar\newlinechar
+		\@whilenum\value{pinlineno}<#2 \do{%
+			% use safe catcodes provided by e-TeX's \readline
+			\readline\pin@file to\pin@line
+			\edef\pin@accu{\pin@accu\pin@line}%
+			\stepcounter{pinlineno}%
+		}
+		\closein\pin@file
+		\expandafter\endgroup
+		\scantokens\expandafter{\pin@accu}%
+	}{%
+	\errmessage{File `#3' doesn't exist!}%
+}%
+}
+
+\newcommand{\readLine}[2]{\readLines{#1}{#1}{#2}}
+\makeatother

@@ -1,0 +1,479 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="50.854607cm"
+   height="24.920769cm"
+   viewBox="-136 31 1016.2446 497.41856"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="uml.svg">
+  <metadata
+     id="metadata148">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs146" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1051"
+     id="namedview144"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="0.76952593"
+     inkscape:cx="416.52969"
+     inkscape:cy="335.32505"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <g
+     id="g4"
+     transform="translate(-181.85553,-0.30954618)">
+    <rect
+       style="fill:#ffffff"
+       x="477"
+       y="32.25"
+       width="395"
+       height="28"
+       id="rect6" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="477"
+       y="32.25"
+       width="395"
+       height="28"
+       id="rect8" />
+    <text
+       font-size="16"
+       style="font-style:normal;font-weight:700;font-size:16px;font-family:sans-serif;text-anchor:middle;fill:#000000"
+       x="674.5"
+       y="51.25"
+       id="text10">Node</text>
+    <rect
+       style="fill:#ffffff"
+       x="477"
+       y="60.25"
+       width="395"
+       height="68"
+       id="rect12" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="477"
+       y="60.25"
+       width="395"
+       height="68"
+       id="rect14" />
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="480"
+       y="74.25"
+       id="text16">+neighbours: List&lt;Node&gt;</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="480"
+       y="90.25"
+       id="text18">+msgsReceived: List&lt;Message&gt;</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="480"
+       y="106.25"
+       id="text20">+msgsReceivedCount: List&lt;int&gt;</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="480"
+       y="122.25"
+       id="text22">+msgsSent: List&lt;Message&gt;</text>
+    <rect
+       style="fill:#ffffff"
+       x="477"
+       y="128.25"
+       width="395"
+       height="68"
+       id="rect24" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="477"
+       y="128.25"
+       width="395"
+       height="68"
+       id="rect26" />
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="480"
+       y="142.25"
+       id="text28">+processMsgs(msgsList:List&lt;Message&gt;,knowing:Event)</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="480"
+       y="158.25"
+       id="text30">+computeMsgData(msg:Message,knowing:Event)</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="480"
+       y="174.25"
+       id="text32">+receiveMsgs(msg:Message)</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="480"
+       y="190.25"
+       id="text34">+finishJob()</text>
+  </g>
+  <g
+     id="g36"
+     transform="translate(-181.85553,-0.30954618)">
+    <rect
+       style="fill:#ffffff"
+       x="307"
+       y="349.25"
+       width="333.39999"
+       height="28"
+       id="rect38" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="307"
+       y="349.25"
+       width="333.39999"
+       height="28"
+       id="rect40" />
+    <text
+       font-size="16"
+       style="font-style:normal;font-weight:700;font-size:16px;font-family:sans-serif;text-anchor:middle;fill:#000000"
+       x="473.70001"
+       y="368.25"
+       id="text42">FunctionNode</text>
+    <rect
+       style="fill:#ffffff"
+       x="307"
+       y="377.25"
+       width="333.39999"
+       height="20"
+       id="rect44" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="307"
+       y="377.25"
+       width="333.39999"
+       height="20"
+       id="rect46" />
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="310"
+       y="391.25"
+       id="text48">+cpd: array&lt;Float&gt;</text>
+    <rect
+       style="fill:#ffffff"
+       x="307"
+       y="397.25"
+       width="333.39999"
+       height="36"
+       id="rect50" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="307"
+       y="397.25"
+       width="333.39999"
+       height="36"
+       id="rect52" />
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="310"
+       y="411.25"
+       id="text54">+computeMsgData(msg:Message,knowing:Event)</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="310"
+       y="427.25"
+       id="text56">+f(event): float</text>
+  </g>
+  <g
+     id="g58"
+     transform="translate(-181.85553,-0.30954618)">
+    <rect
+       style="fill:#ffffff"
+       x="720"
+       y="460.25"
+       width="341.10001"
+       height="28"
+       id="rect60" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="720"
+       y="460.25"
+       width="341.10001"
+       height="28"
+       id="rect62" />
+    <text
+       font-size="16"
+       style="font-style:normal;font-weight:700;font-size:16px;font-family:sans-serif;text-anchor:middle;fill:#000000"
+       x="890.54999"
+       y="479.25"
+       id="text64">VariableNode</text>
+    <rect
+       style="fill:#ffffff"
+       x="720"
+       y="488.25"
+       width="341.10001"
+       height="20"
+       id="rect66" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="720"
+       y="488.25"
+       width="341.10001"
+       height="20"
+       id="rect68" />
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="723"
+       y="502.25"
+       id="text70">+var: Variable</text>
+    <rect
+       style="fill:#ffffff"
+       x="720"
+       y="508.25"
+       width="341.10001"
+       height="20"
+       id="rect72" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="720"
+       y="508.25"
+       width="341.10001"
+       height="20"
+       id="rect74" />
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="723"
+       y="522.25"
+       id="text76">+computeMsgsData(msg:Message,knowing:Event)</text>
+  </g>
+  <g
+     id="g78"
+     transform="translate(-181.85553,-0.30954618)">
+    <polyline
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       points="674.5,214.486 674.5,280.75 473.7,280.75 473.7,349.25 "
+       id="polyline80" />
+    <polygon
+       style="fill:#ffffff"
+       points="682.5,214.486 674.5,198.486 666.5,214.486 "
+       id="polygon82" />
+    <polygon
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       points="682.5,214.486 674.5,198.486 666.5,214.486 "
+       id="polygon84" />
+  </g>
+  <g
+     id="g86"
+     transform="translate(-181.85553,-0.30954618)">
+    <polyline
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       points="674.5,215.474 674.5,281 890.55,281 890.55,460.25 "
+       id="polyline88" />
+    <polygon
+       style="fill:#ffffff"
+       points="682.5,215.474 674.5,199.474 666.5,215.474 "
+       id="polygon90" />
+    <polygon
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       points="682.5,215.474 674.5,199.474 666.5,215.474 "
+       id="polygon92" />
+  </g>
+  <g
+     id="g94"
+     transform="translate(-0.1000061,-209.1818)">
+    <rect
+       style="fill:#ffffff"
+       x="-134.89999"
+       y="404"
+       width="402.70001"
+       height="28"
+       id="rect96" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="-134.89999"
+       y="404"
+       width="402.70001"
+       height="28"
+       id="rect98" />
+    <text
+       font-size="16"
+       style="font-style:normal;font-weight:700;font-size:16px;font-family:sans-serif;text-anchor:middle;fill:#000000"
+       x="66.449997"
+       y="423"
+       id="text100">Graph</text>
+    <rect
+       style="fill:#ffffff"
+       x="-134.89999"
+       y="432"
+       width="402.70001"
+       height="36"
+       id="rect102" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="-134.89999"
+       y="432"
+       width="402.70001"
+       height="36"
+       id="rect104" />
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="-131.89999"
+       y="446"
+       id="text106">+fctNodes: List&lt;FunctionNode&gt;</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="-131.89999"
+       y="462"
+       id="text108">+varNodes: List&lt;VariableNode&gt;</text>
+    <rect
+       style="fill:#ffffff"
+       x="-134.89999"
+       y="468"
+       width="402.70001"
+       height="52"
+       id="rect110" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="-134.89999"
+       y="468"
+       width="402.70001"
+       height="52"
+       id="rect112" />
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="-131.89999"
+       y="482"
+       id="text114">+compile(knowing:Event)</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="-131.89999"
+       y="498"
+       id="text116">+probaMarginal(var:Variable,val,knowing:Event=None)</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="-131.89999"
+       y="514"
+       id="text118">+p(event:Event,knowing:Event)</text>
+  </g>
+  <g
+     id="g120"
+     transform="translate(-18.422136,12.882386)">
+    <rect
+       style="fill:#ffffff"
+       x="-45.900002"
+       y="54"
+       width="164"
+       height="28"
+       id="rect122" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="-45.900002"
+       y="54"
+       width="164"
+       height="28"
+       id="rect124" />
+    <text
+       font-size="16"
+       style="font-style:normal;font-weight:700;font-size:16px;font-family:sans-serif;text-anchor:middle;fill:#000000"
+       x="36.099998"
+       y="73"
+       id="text126">Message</text>
+    <rect
+       style="fill:#ffffff"
+       x="-45.900002"
+       y="82"
+       width="164"
+       height="52"
+       id="rect128" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="-45.900002"
+       y="82"
+       width="164"
+       height="52"
+       id="rect130" />
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="-42.900002"
+       y="96"
+       id="text132">+toNode: Node</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="-42.900002"
+       y="112"
+       id="text134">+fromNode: node</text>
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="-42.900002"
+       y="128"
+       id="text136">+spData: List&lt;float&gt;</text>
+    <rect
+       style="fill:#ffffff"
+       x="-45.900002"
+       y="134"
+       width="164"
+       height="20"
+       id="rect138" />
+    <rect
+       style="fill:none;fill-opacity:0;stroke:#000000;stroke-width:2"
+       x="-45.900002"
+       y="134"
+       width="164"
+       height="20"
+       id="rect140" />
+    <text
+       font-size="12.8"
+       style="font-style:normal;font-weight:normal;font-size:12.80000019px;font-family:monospace;text-anchor:start;fill:#000000"
+       x="-42.900002"
+       y="148"
+       id="text142">+send()</text>
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+// Divergent Blocking Net
+digraph {
+	edge [dir=back]
+		B [style=filled]
+		A [style=solid]
+		C [style=solid]
+			B -> A
+			B -> C
+}

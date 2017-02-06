@@ -12,11 +12,11 @@ defaultCompileVerbose = False
 
 
 class Message(object):
-    def __init__(self, fromNode, fromId, toNode, spData=None, msData=None):
+    def __init__(self, fromNode, toNode, spData=None, msData=None):
         self.spData = spData
         self.msData = msData
+
         self.fromNode = fromNode
-        self.fromId = fromId
         self.toNode = toNode
 
     def send(self):
@@ -25,12 +25,26 @@ class Message(object):
     def __str__(self):
         return str(self.fromNode) + " -> " + str(self.toNode)
 
+    def print(self, spData=True):
+        return str(self) + ": " + (str(self.spData) if spData else str(self.msData))
+
+    def __eq__(self, other):
+        if not isinstance(other, Message):
+            return False
+        if not (self.fromNode is other.fromNode and self.toNode is other.toNode and len(self.spData)==len(other.spData)):
+            return False
+        for i in range(len(self.spData)):
+            if self.spData[i] - other.spData[i] > self.spData[i] * 0.0001:
+                return False
+        return True
+    def __ne__(self, other):
+        return not self == other
+
 
 class Node(object):
 
     def __init__(self):
         self.neighbours = []
-        self.idInNeighbours = []
 
         self.msgsReceived = []
         self.msgsReceivedCount = []
@@ -57,6 +71,7 @@ class Node(object):
             for nId, n in enumerate(self.neighbours):
                 if n is fromNode:
                     self.msgsSent[nId] = None
+                    self.msgsReceivedCount[nId] = 0
         else:
             self.reset()
             if alreadyReset is None:
@@ -89,37 +104,35 @@ class Node(object):
         node.msgsSent.append(None)
         node.msgsReceivedCount.append(0)
 
-        # Aknowledge ids
-        self.idInNeighbours.append(idInNeighbour)
-        node.idInNeighbours.append(idInSelf)
-
     def receiveMsg(self, msg):
-        self.msgsReceived[msg.fromId] = msg
-        for i in range(len(self.msgsReceivedCount)):
-            if i != msg.fromId:
-                self.msgsReceivedCount[i] += 1
-        return
+        for id, node in enumerate(self.neighbours):
+            if node is msg.fromNode:
+                self.msgsReceived[id] = msg
+            else:
+                self.msgsReceivedCount[id] += 1
 
-    def processMsgs(self, knowing, method='base'):
-        if self.isObserved():
-            return []
-
+    def processMsgs(self, msgsList, knowing, makeAssumption=0, method='base'):
         ngbCount = len(self.neighbours)
-        msgs = []
+        hasConverged = True
 
         for outId, receivedCount in enumerate(self.msgsReceivedCount):
-            if receivedCount >= ngbCount-1:
-                # Si tous les messages ont été reçus on peut envoyer le noeud
-                msg = Message(self, self.idInNeighbours[outId], self.neighbours[outId])
+            if receivedCount >= ngbCount-1-makeAssumption:
+                # Si tous les messages ont ete recus
+                # on genere un message pour ce noeud
+                msg = Message(self, self.neighbours[outId])
                 self.computeMsgData(msg, knowing=knowing, methodName=method)
+                if self.msgsSent[outId] == msg:
+                    continue
+                hasConverged = False
                 self.msgsSent[outId] = msg
-                msgs.append(msg)
-                # On décrémente de 1 le nombre de message nécessaire avant de renvoyer un message dans cette direction
-                self.msgsReceivedCount[outId] -= 1
-        return msgs
+                self.msgsReceivedCount[outId] = ngbCount - 2
+                msgsList.append(msg)
+            elif self.msgsSent[outId] is None:
+                hasConverged = False
+        return hasConverged
 
-    def processLeafMsgs(self, knowing, method='base'):
-        return self.processMsgs(knowing=knowing, method=method)
+    def processLeafMsgs(self, msgsList, knowing, method='base'):
+        return self.processMsgs(msgsList, knowing=knowing, method=method)
 
     def computeMsgData(self, msg, knowing, methodName='base'):
         pass
@@ -154,13 +167,6 @@ class Node(object):
             else:
                 self.msData = [ms[0] * ms[1] for ms in msInput]
                 self.spData = [sp[0] * sp[1] for sp in spInput]
-
-        # Normalisation
-        s = sum(self.spData)
-        self.spData = [sp / s for sp in self.spData]
-        s = sum(self.msData)
-        self.msData = [ms / s for ms in self.msData]
-
 
 class FunctionNode(Node):
 
@@ -243,12 +249,19 @@ class FunctionNode(Node):
         method = -1
         valueIni = 0
         if methodName.startswith('exp'):
-            method = 0 if len(methodName)<4 else int(methodName[3])
+            method = 0 if len(methodName) < 4 else int(methodName[3])
             if method > 0:
                 valueIni = -float('inf')
 
+        for neighId, m in enumerate(self.msgsReceived):
+            if m is None and self.neighbours[neighId] is not msg.toNode:
+                valueIni = 1 if method<0 else 0
+                msg.spData = [valueIni for _ in range(len(msg.toNode.valuesId()))]
+                msg.msData = msg.spData.copy()
+                return
+
         for valueId in msg.toNode.valuesId():
-            # Pour chaque valeur de la variable du noeud destinataire, on calcul la somme des produits des messages
+            # Pour chaque valeur de la variable du noeud destinataire, on calcule la somme des produits des messages
             sp = valueIni
             ms = valueIni
 
@@ -267,7 +280,7 @@ class FunctionNode(Node):
                 msTemp = f
 
                 for i, m in enumerate(self.msgsReceived):
-                    if m is None or (m.fromNode is msg.toNode):
+                    if m is None or m.fromNode is msg.toNode:
                         continue
                     spMsg = m.spData[e[i]]
                     msMsg = m.msData[e[i]]
@@ -332,49 +345,39 @@ class VariableNode(Node):
         return range(len(self.var.values))
 
     def computeMsgData(self, msg, knowing, methodName='base'):
-        spData = []
-        msData = []
 
-        storeAsLog = methodName.startswith('exp')
-        valueIni = 1 if not storeAsLog else 0
-
-        for valueId in self.valuesId():
-            # Pour chaque valeur de la variable du noeud on calcule le produit des messages
-            sp = valueIni
-            ms = valueIni
-            for m in self.msgsReceived:
-                if m is None or (m.fromNode is msg.toNode):
-                    continue
-                if not storeAsLog:
-                    sp *= m.spData[valueId]
-                    ms *= m.msData[valueId]
-                else:
-                    sp += m.spData[valueId]
-                    ms += m.msData[valueId]
-            spData.append(sp)
-            msData.append(ms)
-
-        msg.spData = spData
-        msg.msData = msData
-
-    def processLeafMsgs(self, knowing, method='base'):
         if self.isObserved():
-            msgs = []
-            for outId, sentMsg in enumerate(self.msgsSent):
-                if sentMsg is None:
-                    msg = Message(self, self.idInNeighbours[outId], self.neighbours[outId])
-                    if not method.startswith('exp'):
-                        data = [1 if _ == self.observedValueId else 0 for _ in range(len(self.var.values))]
-                    else:
-                        data = [0 if _ == self.observedValueId else -float('inf') for _ in
-                                range(len(self.var.values))]
-                    msg.msData = data
-                    msg.spData = data
-                    msgs.append(msg)
-                    self.msgsSent[outId] = msg
-            return msgs
+            if not methodName.startswith('exp'):
+                data = [1 if _ == self.observedValueId else 0 for _ in range(len(self.var.values))]
+            else:
+                data = [0 if _ == self.observedValueId else -float('inf') for _ in range(len(self.var.values))]
+            msg.msData = data.copy()
+            msg.spData = data.copy()
         else:
-            return self.processMsgs(knowing=knowing, method=method)
+            spData = []
+            msData = []
+
+            storeAsLog = methodName.startswith('exp')
+            valueIni = 1 if not storeAsLog else 0
+
+            for valueId in self.valuesId():
+                # Pour chaque valeur de la variable du noeud on calcule le produit des messages
+                sp = valueIni
+                ms = valueIni
+                for m in self.msgsReceived:
+                    if m is None or (m.fromNode is msg.toNode):
+                        continue
+                    if not storeAsLog:
+                        sp *= m.spData[valueId]
+                        ms *= m.msData[valueId]
+                    else:
+                        sp += m.spData[valueId]
+                        ms += m.msData[valueId]
+                spData.append(sp)
+                msData.append(ms)
+
+            msg.spData = spData
+            msg.msData = msData
 
 
 class Graph(object):
@@ -509,21 +512,20 @@ class Graph(object):
 
         # Compute first messages if needed
         msgs = []
+        finished = True
         for n in self.varNodes + self.fctNodes:
             if resetAll:
                 n.reset()
-
-            computedMsgs = n.processLeafMsgs(knowing=knowing, method=method)
-            for m in computedMsgs:
-                msgs.append(m)
+            finished &= n.processLeafMsgs(msgs, knowing=knowing, method=method)
 
         loopCounter = 1
-        while msgs:
+        while not finished:
+            finished = True
             if verbose:
-                print("")
-                print(str(loopCounter)+":\t" + str(msgs[0]))
+                print(str(loopCounter)+":\t" + msgs[0].print())
                 for m in msgs[1:]:
-                    print("\t"+str(m))
+                    print("\t"+m.print())
+                print("")
 
             # Send messages
             for m in msgs:
@@ -532,10 +534,21 @@ class Graph(object):
             # Compute new messages
             msgs = []
             for n in self.varNodes + self.fctNodes:
-                computedMsgs = n.processMsgs(knowing=knowing, method=method)
-                for m in computedMsgs:
-                    msgs.append(m)
+                finished &= n.processMsgs(msgs, knowing=knowing, method=method)
+            if not msgs and not finished:
+                assumptionLvl = 0
+                while not msgs and assumptionLvl+1 < len(self.fctNodes) +len(self.varNodes):
+                    assumptionLvl += 1
+                    n.processMsgs(msgs, knowing=knowing, method=method, makeAssumption=assumptionLvl)
+                if not msgs:
+                    print("Erreur: impossible de compiler le réseau")
+                    return False
+                if verbose:
+                    print("Making "+str(len(msgs))+" assumption(s) (of level "+str(assumptionLvl)+")...")
             loopCounter += 1
+            if loopCounter > 1000:
+                print("Erreur: impossible de compiler le réseau, les probabilités ne convergent pas...")
+                return False
 
         if loopCounter!=1:
             for x in self.varNodes:
@@ -544,27 +557,39 @@ class Graph(object):
         self.isCompiled = method
         return True
 
-    def probaMarginal(self, var, value, knowing=None):
+    def probaMarginal(self, var, value, knowing=None, conditional=True):
         if not self.compile(knowing=knowing):
             return float('nan')
 
         xNode = self.xNode(var)
-        if isinstance(value, bool) or (not isinstance(value, int)):
-            value = xNode.var.valInternalId[value]
-
-        proba = xNode.spData[value]
+        if not isinstance(value, set) and not isinstance(value, list):
+            value = [value]
+        proba = 0
+        for v in value:
+            if isinstance(v, bool) or (not isinstance(v, int)):
+                v = xNode.var.valInternalId[v]
+            proba += xNode.spData[v]
+        if conditional:
+            proba /= sum(xNode.spData)
         return proba
 
     def p(self, event, knowing=None):
-        if knowing is None:
-            knowing = pt.Event(subset=self.subset)
-        if not event.isMarginal():
-            print("Error: event must correspond to a marginal probability")
-            return float('nan')
-        e = event.export()
-        var = e[0][0]
-        value = e[0][1][0]
-        return self.probaMarginal(var, value, knowing=knowing)
+        isKnowing = knowing is not None
+        if not isKnowing:
+            observed = event.trueIntersect(self.knowing)
+            exportedEvent = (event-observed).export()
+            for var, val in exportedEvent[1:]:
+                observed += (var == val)
+            if not exportedEvent:
+                exportedEvent = event.export()
+            return self.probaMarginal(exportedEvent[0][0], exportedEvent[0][1], knowing=observed, conditional=False)
+
+        if(event.isMarginal()):
+            exported = event.export()
+            return self.probaMarginal(exported[0][0], exported[0][1], knowing=knowing, conditional=True)
+
+        pK = self.p(knowing)
+        return self.p(event+knowing) / pK
 
 
 
@@ -669,7 +694,7 @@ def graphFromBayesNet(bayesNet):
         varList = [e.var for e in n.parents] + [n.var]
 
 
-        f = graph.addFct(n.proba, varList)
+        f = graph.addFct(n.cpd, varList)
         # print(str(f) + " : " + str(n.proba))
 
     return graph

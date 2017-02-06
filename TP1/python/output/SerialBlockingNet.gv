@@ -1,0 +1,10 @@
+// Serial Blocking Net
+digraph {
+	graph [rotation=180]
+	edge [dir=back]
+		A [style=solid]
+		B [style=filled]
+		C [style=solid]
+			A -> B
+			B -> C
+}

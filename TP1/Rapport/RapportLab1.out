@@ -1,0 +1,11 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Question 1}{}% 2
+\BOOKMARK [1][-]{section.3}{Question 2}{}% 3
+\BOOKMARK [2][-]{subsection.3.1}{Mod\351lisation du r\351seau de Bayes}{section.3}% 4
+\BOOKMARK [2][-]{subsection.3.2}{Calcul de probabilit\351s jointes et de distribution}{section.3}% 5
+\BOOKMARK [2][-]{subsection.3.3}{Calcul de probabilit\351s marginales conditionnelles}{section.3}% 6
+\BOOKMARK [2][-]{subsection.3.4}{Calcul des probabilit\351s marginales inconditionnelles}{section.3}% 7
+\BOOKMARK [2][-]{subsection.3.5}{\311quations de calcul de probabilit\351}{section.3}% 8
+\BOOKMARK [1][-]{section.4}{Question 3: Sum Product}{}% 9
+\BOOKMARK [1][-]{appendix.A}{Le package: probatoolbox.py}{}% 10
+\BOOKMARK [1][-]{appendix.B}{Le package: BayesNetwork.py}{}% 11

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="49cm" height="23cm" viewBox="10 23 980 453" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g>
+    <rect style="fill: #ffffff" x="477" y="32.25" width="395" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="477" y="32.25" width="395" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="674.5" y="51.25">Node</text>
+    <rect style="fill: #ffffff" x="477" y="60.25" width="395" height="68"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="477" y="60.25" width="395" height="68"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="480" y="74.25">+neighbours: List&lt;Node&gt;</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="480" y="90.25">+msgsReceived: List&lt;Message&gt;</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="480" y="106.25">+msgsReceivedCount: List&lt;int&gt;</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="480" y="122.25">+msgsSent: List&lt;Message&gt;</text>
+    <rect style="fill: #ffffff" x="477" y="128.25" width="395" height="68"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="477" y="128.25" width="395" height="68"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="480" y="142.25">+processMsgs(msgsList:List&lt;Message&gt;,knowing:Event)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="480" y="158.25">+computeMsgData(msg:Message,knowing:Event)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="480" y="174.25">+receiveMsgs(msg:Message)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="480" y="190.25">+finishJob()</text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="454" y="291.25" width="333.4" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="454" y="291.25" width="333.4" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="620.7" y="310.25">FunctionNode</text>
+    <rect style="fill: #ffffff" x="454" y="319.25" width="333.4" height="20"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="454" y="319.25" width="333.4" height="20"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="457" y="333.25">+cpd: array&lt;Float&gt;</text>
+    <rect style="fill: #ffffff" x="454" y="339.25" width="333.4" height="36"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="454" y="339.25" width="333.4" height="36"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="457" y="353.25">+computeMsgData(msg:Message,knowing:Event)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="457" y="369.25">+f(event): float</text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="647" y="406.25" width="341.1" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="647" y="406.25" width="341.1" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="817.55" y="425.25">VariableNode</text>
+    <rect style="fill: #ffffff" x="647" y="434.25" width="341.1" height="20"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="647" y="434.25" width="341.1" height="20"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="650" y="448.25">+var: Variable</text>
+    <rect style="fill: #ffffff" x="647" y="454.25" width="341.1" height="20"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="647" y="454.25" width="341.1" height="20"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="650" y="468.25">+computeMsgsData(msg:Message,knowing:Event)</text>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="674.5,214.486 674.5,256 620.7,256 620.7,291.25 "/>
+    <polygon style="fill: #ffffff" points="682.5,214.486 674.5,198.486 666.5,214.486 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="682.5,214.486 674.5,198.486 666.5,214.486 "/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="674.5,215.482 674.5,256 817.55,256 817.55,406.25 "/>
+    <polygon style="fill: #ffffff" points="682.5,215.482 674.5,199.482 666.5,215.482 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="682.5,215.482 674.5,199.482 666.5,215.482 "/>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="11.1" y="194" width="402.7" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="11.1" y="194" width="402.7" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="212.45" y="213">Graph</text>
+    <rect style="fill: #ffffff" x="11.1" y="222" width="402.7" height="36"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="11.1" y="222" width="402.7" height="36"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="14.1" y="236">+fctNodes: List&lt;FunctionNode&gt;</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="14.1" y="252">+varNodes: List&lt;VariableNode&gt;</text>
+    <rect style="fill: #ffffff" x="11.1" y="258" width="402.7" height="52"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="11.1" y="258" width="402.7" height="52"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="14.1" y="272">+compile(knowing:Event)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="14.1" y="288">+probaMarginal(var:Variable,val,knowing:Event=None)</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="14.1" y="304">+p(event:Event,knowing:Event)</text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="97.1" y="24" width="164" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="97.1" y="24" width="164" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="179.1" y="43">Message</text>
+    <rect style="fill: #ffffff" x="97.1" y="52" width="164" height="52"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="97.1" y="52" width="164" height="52"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="100.1" y="66">+toNode: Node</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="100.1" y="82">+fromNode: node</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="100.1" y="98">+spData: List&lt;float&gt;</text>
+    <rect style="fill: #ffffff" x="97.1" y="104" width="164" height="20"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="97.1" y="104" width="164" height="20"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="100.1" y="118">+send()</text>
+  </g>
+</svg>

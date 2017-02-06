@@ -1,0 +1,9 @@
+// Explaining Away Net
+digraph {
+	edge [dir=back]
+		A [style=solid]
+		B [style=solid]
+		C [style=filled]
+			A -> C
+			B -> C
+}

@@ -1,0 +1,534 @@
+\documentclass[11pt,letterpaper]{article}
+	
+\usepackage{polyStyle}
+
+%-----------------------------------------------------------------%
+% Definitions
+\renewcommand{\firstauthor}{Gabriel Lepetit-Aimon}
+\renewcommand{\firstregistrationnumber}{1865327}
+\renewcommand{\reportnumber}{1}
+\prepareTitles
+%-----------------------------------------------------------------%
+
+
+\graphicspath{{Figures/}}
+\renewcommand{\thesubsection}{\alph{subsection})}
+
+\DeclareMathOperator{\p}{P}
+\newcommand{\proba}[1]{\p(#1)}
+\newcommand{\probaS}[2]{\p(#1|#2)}
+\DeclareMathOperator{\Norm}{\mathcal{N}}
+\newcommand{\inv}{^{-1}}
+\newcommand{\inverse}[1]{\left( #1 \right)\inv}
+\newcommand{\Prod}[3]{\prod\limits_{#1}^{#2}\left(\, #3 \,\right)}
+\newcommand{\somme}[2]{\sum\limits_{#1}\left(\, #2 \,\right)}
+\newcommand{\sommeSimp}[1]{\sum\limits_{#1}}
+\DeclareMathOperator{\egal}{{\tiny=}}
+\DeclareMathOperator{\eExp}{e}
+\newcommand{\Exp}[1]{\eExp^{#1}}
+\DeclareMathOperator{\Esperance}{E}
+\newcommand{\Esp}[1]{\Esperance \left[ #1 \right]}
+
+\DeclareMathOperator{\A}{\mathsf{A}}
+\DeclareMathOperator{\B}{\mathsf{B}}
+\DeclareMathOperator{\obsB}{\hat{\mathsf{B}}}
+\DeclareMathOperator{\C}{\mathsf{C}}
+\DeclareMathOperator{\obsC}{\hat{\mathsf{C}}}
+\DeclareMathOperator{\X}{\mathsf{X}}
+\DeclareMathOperator{\T}{\mathsf{T}}
+\DeclareMathOperator{\M}{\mathsf{M}}
+\DeclareMathOperator{\J}{\mathsf{J}}
+
+\DeclareMathOperator{\avec}{avec\ }
+\DeclareMathOperator{\si}{si\ }
+\DeclareMathOperator{\et}{et\ }
+\DeclareMathOperator{\car}{car\ }
+\DeclareMathOperator{\donc}{donc\ }
+\DeclareMathOperator{\sinon}{sinon\ }
+\DeclareMathOperator{\Or}{or\ }
+\DeclareMathOperator{\ou}{ou}
+
+
+\newcommand{\pyFile}[3]
+{	
+    \codeSource{#1}
+    \importPy{/home/gaby/Ecole/EPM/INF8225/TP1/python/#1}{#2}{#3}
+}
+
+\begin{document}
+	
+	\maketitlepage
+	
+%_______________________________________________________%	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+Ce laboratoire est une introduction à l'utilisation des réseaux de Bayes et des Factors Graphs pour le calcul de probabilités jointes puis marginales et enfin conditionnelles. Dans un premier temps, nous étudierons la dépendance marginale et conditionnelle entre les variables d'un même graphe. Nous détaillerons trois phénomènes issus de ces dépendances. Dans un second temps, nous nous concentrerons sur un réseau de Bayes donné nottament pour en extraire sa distribution. Enfin, nous implémenterons l'algorithme \emph{sum-product} et recalculerons toutes ces probabilités...\\
+
+
+J'ai choisi de coder ce LAB en Python puisque c'est le langage que je devrai utiliser pour mener à bien mon projet de maitrise. N'ayant jamais réellement codé en Python auparavant, j'ai donc saisi cette opportunité pour me familiariser avec ce langage. Par conséquent, certaine des fonctionnalités que je propose dépassent le cadre du TP: réseaux et variables aléatoires quelconques (pas forcément binaires). Ce rapport simplifie donc parfois mon code original (qui est joint à ce rapport) en se concentrant sur l'idée générale derrière les algorithmes sans s'attarder sur mon implémentation. Une courte documentation de l'interface de ces packages est cependant disponible en annexe.
+
+%_______________________________________________________%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Question 1}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%---------------------------------%
+\subsection*{Explaining Away}
+
+Le phénomène de explaining away résulte de la différence entre probabilités conditionnelle et marginale. Prenons le réseau de Bayes simple présenté sur la figure~\ref{fig:explAway} et générer par le code suivant (voir Annexe~\ref{bayesNetwork} pour plus de détail sur la création de réseau):
+
+\pyFile{question1.py}{4}{7}
+\imgW{pyOut/explAway}{Réseau Bayesien illustrant le phénomène \emph{Explaining Away}}{fig:explAway}{0.2}
+
+On peut facilement démontrer que $\A$ et $\B$ sont marginalement indépendantes:
+\eq{\proba{\A,\B} &= \somme{\C}{\proba{\A}\proba{\B}\probaS{\C}{\A,\B}} =\proba{\A}\proba{\B}\ \somme{\C}{\probaS{\C}{\A,\B}} = \proba{\A}\proba{\B} \times 1 \\
+    \proba{\A,\B} &= \proba{\A}\proba{\B}
+}
+
+Par contre ces deux variables ne sont pas conditionnellement indépendantes par rapport à $\C$.
+\eq{ \probaS{\A,\B}{\C}  &=\dfrac{\proba{\A,\B,\C}}{\proba{\C}} = \dfrac{\proba{\A}\proba{\B}\probaS{\C}{\A,\B}}{\proba{\C}}
+\tab\tab \donc \tab \dfrac{\proba{\A}\proba{\B}}{\proba{\C}} = \dfrac{\probaS{\A,\B}{\C}}{\probaS{\C}{\A,\B}}\\
+\probaS{\A}{\C} \probaS{\B}{\C} &= \dfrac{\proba{\A,\C}}{\proba{\C}} \times \dfrac{\proba{\B,\C}}{\proba{\C}^2} \\
+				&= \dfrac{1}{\proba{\C}^2} \times \somme{\B}{\proba{\A}\proba{\B}\probaS{\C}{\A,\B}} \times \somme{\A}{\proba{\A}\proba{\B}\probaS{\C}{\A,\B}}\\
+				&= \dfrac{1}{\proba{\C}^2} \times \proba{\A}\somme{\B}{\probaS{\C}{\A,\B}} \times \proba{\B}\somme{\A}{\probaS{\C}{\A,\B}} \\
+				&= \dfrac{ \proba{\A}\proba{\B}}{\proba{\C}} \times \dfrac{1}{\proba{\C}}\somme{\B}{\probaS{\C}{\A,\B}} \somme{\A}{\probaS{\C}{\A,\B}} \\
+\probaS{\A}{\C} \probaS{\B}{\C}  &= \probaS{\A,\B}{\C} \simplify{\times  \dfrac{1}{\proba{\C} \probaS{\C}{\A,\B}}\somme{\B}{\probaS{\C}{\A,\B}} \somme{\A}{\probaS{\C}{\A,\B}}}
+}
+On a donc bien: $\probaS{\A}{\C}\probaS{\B}{\C} \neq \probaS{\A,\B}{\C}$. Ce résultat est vérifiable numériquement:
+
+\pyFile{question1.py}{18}{21}
+\outPy{P(A|C)*P(B|C)=0.166149151515\\
+P(A,B|C)=0.0915128898627}
+
+
+En pratique, cette dépendance conditionnelle entraine: $\probaS{\A}{\C} \neq \probaS{\A}{\C,\B}$. C'est ce phénomène que l'on appelle \emph{Explaining Away} et qui est visible sur le réseau précédent:
+\pyFile{question1.py}{10}{16}
+\outPy{P(A)=27.0\% \\
+P(A|C)=58.51\% \\
+P(A|C,B)=32.23\%}
+
+On peut retrouver ce résultat intuitivement. Si deux maladies $\A$ et $\B$ ont le même symptôme $\C$ et que ce symptome est observé ($\C==True$) il est probable qu'au moins une des deux maladies est été contractée. Autrement dit la probabilité qu'un patient soit atteint d'une maladie augmente si il en possède les symptomes ($\probaS{\A}{\C} > \proba{\A}$). Mais si on est en plus certain que le patient a contracté la deuxième maladie ($\B==True$), l'observation des symptomes est expliquée, et la probabilité qu'il ai aussi contracté la première maladie diminue ($\probaS{\A}{\C,\B} < \proba{\C,\B}$). Après tout, il faut vraiment qu'il soit malchanceux pour avoir contracté les deux maladies simultanément...
+
+
+\clearpage
+%---------------------------------%
+\subsection*{Serial Blocking}
+Étudions maintenant un autre réseau simple présenté sur la figure~\ref{fig:serBlock} et générer par le code suivant:
+\pyFile{question1.py}{27}{30}
+\imgW{pyOut/serBlock}{Réseau Bayesien illustrant le phénomène \emph{Serial Blocking}}{fig:serBlock}{0.6}
+
+Cette fois $\A$ et $\C$ sont bien conditionnellement indépendantes par rapport à $\B$. En effet, on a:
+
+\eq{ \probaS{\A,\C}{\B}  = \dfrac{\proba{\A,\B,\C}}{\proba{\B}} = \dfrac{\proba{\A}\probaS{\B}{\A}\probaS{\C}{\B}}{\proba{\B}}
+}
+
+\eq{ \probaS{\A}{\B}\probaS{\C}{\B}  = \dfrac{\proba{\A,\B}}{\proba{\B}} \times \dfrac{\proba{\C,\B}}{\proba{\B}} 
+	    &= \dfrac{\somme{\C}{\proba{\A}\probaS{\B}{\A} \probaS{\C}{\B}} }{\proba{\B}} \times \dfrac{\somme{\A}{\proba{\A}\probaS{\B}{\A} \probaS{\C}{\B}}}{\somme{\A}{\proba{\A}\probaS{\B}{\A} \simplify{\somme{\C}{\probaS{\C}{\B}}} }}\\
+	    &= \dfrac{\proba{\A}\probaS{\B}{\A} \simplify{\somme{\C}{ \probaS{\C}{\B}}} }{\proba{\B}} \times \probaS{\C}{\B} \simplify{\dfrac{\somme{\A}{\proba{\A}\probaS{\B}{\A}}}{\somme{\A}{\proba{\A}\probaS{\B}{\A}}} }\\
+\donc\tab\tab\tab
+     \probaS{\A}{\B}\probaS{\C}{\B} &= \dfrac{\proba{\A}\probaS{\B}{\A} \probaS{\C}{\B} }{\proba{\B}} =  \probaS{\A,\C}{\B}
+}
+
+Par définition, $\A$ et $\C$ sont donc bien conditionnellement indépendantes par rapport à $\B$. Autrement dit, si $\B$ est observé, une observation sur $\C$ n'apporte aucune information sur la valeur de $\A$. \\
+
+Ce phénomène appelé \emph{Serial Blocking}, est observable numériquement $\probaS{\A}{\B} = \probaS{\A}{\B,\C}$:
+
+\pyFile{question1.py}{33}{36}
+\outPy{P(A|B)=96.82\% \\
+P(A|B,C)=96.82\%}
+
+On peut aussi vérifier que $\probaS{\A}{\B}\times\probaS{\C}{\B} = \probaS{\A,\C}{\B}$:
+\pyFile{question1.py}{38}{41}
+\outPy{P(A|B)*P(C|B)=0.193643031785 \\
+P(A,C|B)=0.193643031785}
+
+\clearpage
+%---------------------------------%
+\subsection*{Divergent Blocking}
+Le phénomène de \emph{divergent blocking} est très simulaire au Serial Blocking, mais intervient lorsqu'on observe un parent commun de deux variables aléatoires. Un cas simple de cette configuration est présenté en figure~\ref{fig:divBlock} généré par le code:
+\pyFile{question1.py}{46}{49}
+\imgW{pyOut/divBlock}{Réseau Bayesien illustrant le phénomène \emph{Divergent Blocking}}{fig:divBlock}{0.2}
+
+Comme pour le Serial Blocking on peut démontrer l'indépendance conditionnelle de $\A$ et $\C$ par rapport à $\B$:
+$$ \probaS{\A,\C}{\B}  = \dfrac{\proba{\A,\B,\C}}{\proba{\B}} = \dfrac{\probaS{\A}{\B} \proba{\B} \probaS{\C}{\B}}{\proba{\B}} = \probaS{\A}{\B} \probaS{\C}{\B} $$
+
+De manière évidente on donc bien que l'observation d'un noeud isole ses enfants les uns des autres. L'observation de l'un deux n'apportera aucune information sur la probabilité d'occurence des autres. Cette invariance est vérifiable  numériquement grâce à notre exemple:
+
+\pyFile{question1.py}{52}{55}
+\outPy{P(A|B)=89\% \\
+P(A|B,C)=89\%}
+
+On peut aussi vérifié que $\probaS{\A}{\B}\times\probaS{\C}{\B} = \probaS{\A,\C}{\B}$:
+\pyFile{question1.py}{57}{60}
+\outPy{P(A|B)*P(C|B)=0.2047 \\
+P(A,C|B)=0.2047}
+
+\clearpage
+%_______________________________________________________%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Question 2}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Cette question va nous permettre d'étudier les calculs de probabilités sur un réseau de Bayes par la méthode brutale. 
+
+\subsection{Modélisation du réseau de Bayes}
+
+Le réseau étudié peut être généré grâce au code suivant:
+\pyFile{question2.py}{2}{10}
+\imgW{pyOut/q2Graph}{Réseau de Bayes}{fig:bnet}{0.2}
+
+Avant d'expliciter le fonctionnement de l'algorithme de calcul de probabilités (via un appel à la méthode \inPy{p(evenement, sachant)}), on peut vérifier pour quelques valeurs, la cohérence des résultats avec notre modèle ou avec le phénomène d'Explaining Away:
+\pyFile{question2.py}{13}{21}
+\outPy{P(A|!C,T)=0.29\\
+P(J|A)=0.7\\
+P(C)=0.001\\
+P(C|A)*P(T|A)=0.08629 diffère de p(C,T|A)=0.00076}
+\clearpage
+
+\subsection{Calcul de probabilités jointes et de distribution}
+
+Que ce soit pour calculer la distribution des probabilités ou pour implémenter un algorithme général, il au préalable pouvoir calculer une probabilité jointe. Dans un réseau de Bayes, une probabilité jointe est donné par:
+$$ \proba{\X_0, \X_1, ..., \X_n} = \Prod{i=0}{n}{ \probaS{\X_i}{...} } $$
+Si \inPy{variables} est la liste des \inPy{VariableNode} d'un réseau et si \inPy{event} est l'évènement dont on veut calculer la probabilité jointe \inPy{probaJointe}, cette formule ce traduit en Python par:
+\begin{Py}
+probaJointe = 1
+for var in variables:
+    probaJointe *= var.probaAt(event)
+\end{Py}
+
+C'est en répétant cette opération pour tous les évènements possibles que \inPy{distribution()} calcule la distribution du réseau {\small(voir \ref{probaMarg} pour l'explication du listage des évènements)}:
+
+\pyFile{question2.py}{26}{28}
+\outPy{['0.0\%', '0.04\%', '0.06\%', '0.06\%', '0.0\%', '0.0\%', '0.0\%', '0.05\%', '0.0\%', '0.0\%', '0.01\%', '0.01\%', '0.0\%', '0.0\%', '0.0\%', '0.95\%', '0.0\%', '0.02\%', '0.03\%', '0.03\%', '0.0\%', '0.01\%', '0.0\%', '4.93\%', '0.0\%', '0.0\%', '0.0\%', '0.0\%', '0.0\%', '0.13\%', '0.01\%', '93.67\%']}
+Les résultats sont présentés sur le tableau~\ref{tab:dist} et l'histogramme est visible sur la figure~\ref{fig:dist}. On remarque que la très faible probabilité d'occurence de $\C$ et $\T$ concentre la distribution des probabilités sur le cas où aucune variable aléatoire n'est vraie ($\proba{!\C,!\T,!\A,!\M,!\J} = 93.67\%$).
+\imgW{pyOut/distribution}{Distribution des probabilités du réseau}{fig:dist}{0.9}
+\clearpage
+\begin{table}
+\begin{customTable}{H H'R'R'R'R'R'R'R'R'}
+ && \multicolumn{4}{c'}{\hHead{A}} & \multicolumn{4}{c'}{\hHead{non A}}  \\
+ && \multicolumn{2}{c'}{\hHead{T}} & \multicolumn{2}{c'}{\hHead{non T}} & \multicolumn{2}{c'}{\hHead{T}} & \multicolumn{2}{c'}{\hHead{non T}}  \\
+ && \hHead{C} & \hHead{non C} & \hHead{C} & \hHead{non C} & \hHead{C} & \hHead{non C} & \hHead{C} & \hHead{non C}  \rEnd
+\vHead{J}  & \vHead{\ M} & 0.0\%  & 0.04\% & 0.06\% & 0.06\% & 0.0\%  & 0.0\%  & 0.0\%  & 0.05\%  \rEnd
+\vHead{}   &  \vHead{non M} & 0.0\%  & 0.0\%  & 0.01\% & 0.01\% & 0.0\%  & 0.0\%  & 0.0\%  & 0.95\%  \rEnd 
+\vHead{non J} & \vHead{\ M} & 0.0\%  & 0.02\% & 0.03\% & 0.03\% & 0.0\%  & 0.01\% & 0.0\%  & 4.93\%  \rEnd
+\vHead{}   &  \vHead{non M} & 0.0\%  & 0.0\%  & 0.0\%  & 0.0\%  & 0.0\%  & 0.13\% & 0.01\% & 93.67\% \rEnd
+\end{customTable}
+\label{tab:dist}
+\caption{Distribution des probabilités du modèle étudié}
+\end{table}
+
+\subsection{Calcul de probabilités marginales conditionnelles}
+Dans un réseau de Bayes, une probabilité marginale s'exprime comme une somme de probabilités jointes. Par exemple:
+\eq{\proba{\C=Vrai,\A=Faux} &=  \somme{\T,\M,\J}{ \proba{\C=Vrai,\ \T,\ \A=Faux,\ \M,\ \J} } }
+\label{probaMarg}
+
+Aussi, pour pouvoir calculer une probabilité marginale quelconque il faut pouvoir décliner son évènement (par exemple: \inPy{(C==True)\&(A==False)}) en une liste de sous-évènements atomiques où la valeur de chacune des variables est bien définie. C'est ce que réalise la méthode \inPy{Event.listVecEvents()} du package \inPy{probatoolbox.py} que j'ai codé pour l'occasion.
+
+\pyFile{question2.py}{32}{34}
+\outPy{[0, 0, 1, 0, 0] \\ {}
+[0, 1, 1, 0, 0] \\ {}
+[0, 0, 1, 1, 0] \\ {}
+[0, 1, 1, 1, 0] \\ {}
+[0, 0, 1, 0, 1] \\ {}
+[0, 1, 1, 0, 1] \\ {}
+[0, 0, 1, 1, 1] \\ {}
+[0, 1, 1, 1, 1]
+}
+
+Je précise que j'ai choisi d'avoir \inPy{True} comme première valeur pour mes variables aléatoires puis \inPy{False}. Par conséquent l'index de la valeur \inPy{True} est \inPy{0} et l'index pour la valeur \inPy{False} est \inPy{1}, même si c'est contre-intuitif... Ces indexes ne servent de toutes façons que d'identifiant aux valeurs d'une variables aléatoires (qui peuvent aussi bien être des booléens, que des chaines de caractères ou des nombres flottants...)
+
+En considérant que les \inPy{Event} stockent leurs états dans une liste nommée \inPy{space} ayant autant de cases que notre modèle  de variables aléatoires et contenant chacunes, l'ensemble des valeurs que la variable peut prendre. Par exemple dans le cas de variable binaire cet ensemble serait \inPy{[0,1]} pour les variables non définis, \inPy{[0]} pour les variables valant \inPy{True}, et \inPy{[1]} pour les variables valant \inPy{False}.
+Pour l'évènement défini plus haut on aurait donc:
+\begin{Py}
+print( ((C==True)&(A==False)).space ) # Dans la base [C,T,A,M,J]
+\end{Py}
+\vspace{-0.2em}
+\outPy{[[0], [0,1], [1], [0,1], [0,1]]}
+
+
+L'implémentation de la méthode \inPy{Event.listVecEvents()} pourrait alors se simplifier par:
+\begin{Py}
+def listVecEvents(self)
+    # Initialisation du premier evenement atomique et de la varyingVar
+    currentEvent = []
+    varyingVar = []	# Liste des indexes des variables a faire varier
+    for varId, values in enumerate(self.space):
+        currentEvent.append(values[0])
+        if len(self.values) > 1:
+            varyingVar.append(varId)
+
+    # Iteration a travers tous les evenements atomiques
+    rList = [currentEvent]
+    while(True):
+        found = False;
+        for varId in varyingVar:
+            currentValue = currentEvent[varId]
+            # On lit les valeurs acceptables pour cette variable
+            values = self.space[varId]
+            # On cherche la prochaine valeur acceptable 
+            while values[-1] >= currentV+1 and not found:
+                currentV+=1
+                if currentV in values:
+                    found = True  
+            # Si une valeur acceptable a ete trouve on modifie currentEvent
+            if found:
+                currentEvent[varId] = currentV
+                break	# et on sort de la boucle
+            else:	# sinon on la remplace par la premiere valeur acceptable
+                currentEvent[varId] = values[0]
+            # et on passe a la variable suivante
+
+        if found:	# Si on a un evenement on l'ajoute a la liste
+            rList.append(list(currentEvent))
+        else:	# Sinon on sort de la boucle
+            break
+    return rList
+\end{Py}
+
+En réalité les valeurs possibles qu'un évènement attribue à une variable sont stockées sous forme d'ensemble (de \inPy{set}) ce qui complexifie l'implémentation de cette méthode. La version originale de \inPy{listVecEvents()}, visible dans le fichier \inPy{probatoolbox.py} est donc un peu plus complexe et complète. Elle permet nottament, via un paramètre optionnel \inPy{base} de modifier la base dans laquelle les vecteurs sont exprimés (la base par défaut suit l'ordre selon lequel les variables ont été déclarées)
+
+Avec cette liste d'évènement atomique, sommer les probabilités jointes associées à chacun d'eux pour obtenir la probabilité marginale devient un jeu d'enfant. Cette opération est réalisée dans la méthode de la classe \inPy{Network}:
+
+\inPy{computeInconditionnalProbability(self, event)}
+\pyFile{BayesNetwork.py}{234}{241}
+
+Enfin, pour implémenter la méthode \inPy{Network.p(event, knowing)} qui peut aussi calculer des probabiltés conditionnelles, il suffit d'appliquer la règle de bayes:
+$$ \probaS{\A}{\B} = \dfrac{\proba{\A \cup \B}}{\proba{\B}} $$
+
+En Python, on obtient: {\small(sachant que l'opérateur \inPy{+} de la classe \inPy{Event} a été surchargé en opérateur d'union)}
+
+\pyFile{BayesNetwork.py}{182}{194}
+
+\vspace{2em}
+Finalement, on peut calculer les probabilités demandées:
+
+\pyFile{question2.py}{37}{41}
+\outPy{p(C=True|M=True \& J=False) = 0.513\% \\
+p(C=True|M=False \& J=True) = 0.688\% \\
+p(C=True|M=True \& J=True) = 28.417\% \\
+p(C=True|M=False \& J=False) = 0.009\% \\
+p(C=True|M=True) = 1.628\% \\
+p(C=True|J=True) = 5.612\%}
+
+\clearpage
+
+\subsection{Calcul des probabilités marginales inconditionnelles}
+Afin de calculer ces probabilités, on peut soit utiliser l'algorithme précédent:
+
+\pyFile{question2.py}{47}{50}
+\outPy{p(C=True) = 0.1\% \\
+p(T=True) = 0.2\% \\
+p(A=True) = 0.252\% \\
+p(M=True) = 5.214\% \\
+p(J=True) = 1.174\%}
+
+Ou alors directement extraire ces informations du graphes en calculant, une à une les probabilités marginales des enfants en fonction de celles des parents:
+
+\pyFile{question2.py}{53}{59}
+\outPy{p(C=True) = 0.1\% \\
+p(T=True) = 0.2\% \\
+p(A=True) = 0.252\% \\
+p(M=True) = 5.214\% \\
+p(J=True) = 1.174\%}
+
+Dans les deux cas, les résultats sont similaires...
+
+
+\subsection{Équations de calcul de probabilité}
+
+Si on utilise la définition d'une probabilité marginale, on a:
+\eq{\proba{\J}  &= \sommeSimp{\A} \sommeSimp{\C} \sommeSimp{\T} \somme{\M}{\probaS{\J}{\A}\probaS{\A}{\C,\T}\proba{\C}\proba{\T}\probaS{\M}{A}} \\
+		&= \sommeSimp{\A} \sommeSimp{\C} \somme{\T}{ \probaS{\J}{\A}\probaS{\A}{\C,\T}\proba{\C}\proba{\T} \simplify{\somme{\M}{\probaS{\M}{A}}} } \\
+		&= \somme{\A}{ \probaS{\J}{\A} \sommeSimp{\C} \somme{\T}{ \probaS{\A}{\C,\T}\proba{\C}\proba{\T}} } \\
+\Or \TAB \proba{\A} &= \sommeSimp{\C} \somme{\T}{ \probaS{\A}{\C,\T}\proba{\C}\proba{\T}} \\
+\donc\TAB\proba{\J} &= \somme{\A}{\probaS{\J}{\A} \proba{\A}}
+}
+On peut facilement retrouver ce résultat en appliquant une marginalisation au théorème de Bayes:
+\eq{\proba{\J}  &= \somme{\A}{\proba{\J,\A}} \TAB \EqNote{marginalisation}\\
+		&= \somme{\A}{\probaS{\J}{\A} \times \proba{\A}} \EqNote{théorème de Bayes}\\
+    \proba{\J}	&= \probaS{\J}{\A=Vrai}\proba{\A=Vrai}\ +\ \probaS{\J}{\A=Faux}\proba{\A=Faux} \\
+    \\
+\avec \TAB \proba{\A} &= \sommeSimp{\C}\somme{\T}{\probaS{\A}{\C,\T}\proba{\C}\proba{\T}} \\
+	\proba{\A}   &=\tab \probaS{\A}{\C=Vrai,\T=Vrai}\,\proba{\C=Vrai}\,\proba{\T=Vrai} \\
+		      &\tab +  \probaS{\A}{\C=Faux,\T=Vrai}\,\proba{\C=Faux}\,\proba{\T=Vrai} \\
+		      &\tab +  \probaS{\A}{\C=Vrai,\T=Faux}\,\proba{\C=Vrai}\,\proba{\T=Faux} \\
+		      &\tab +  \probaS{\A}{\C=Faux,\T=Faux}\,\proba{\C=Faux}\,\proba{\T=Faux}
+}
+
+\vspace{2em}
+Toujours en partant de la définition d'une probabilité marginale, on a:
+\eq{\probaS{\C}{\J=Vrai}  &= \sommeSimp{\A} \sommeSimp{\T} \somme{\M}{\proba{\C}\probaS{\J=Vrai}{\A}\probaS{\A}{\C,\T}\proba{\T}\probaS{\M}{A}} \\
+			  &= \proba{\C} \sommeSimp{\A} \somme{\T}{ \probaS{\J=Vrai}{\A}\probaS{\A}{\C,\T}\proba{\T} \simplify{\somme{\M}{\probaS{\M}{A}}} } \\
+    \probaS{\C}{\J=Vrai}  &= \proba{\C} \somme{\A}{ \probaS{\J=Vrai}{\A} \somme{\T}{\probaS{\A}{\C,\T}\proba{\T}}}
+}
+
+Après développement on obtient:
+\eq{\probaS{\C}{\J=Vrai}   &=\tab   \proba{\C} \probaS{\J=Vrai}{\A=Vrai} \probaS{\A=Vrai}{\C,\T=Vrai} \proba{\T=Vrai} \\
+			   &\tab +  \proba{\C} \probaS{\J=Vrai}{\A=Vrai} \probaS{\A=Vrai}{\C,\T=Faux} \proba{\T=Faux} \\
+			   &\tab +  \proba{\C} \probaS{\J=Vrai}{\A=Faux} \probaS{\A=Faux}{\C,\T=Vrai} \proba{\T=Vrai} \\
+			   &\tab +  \proba{\C} \probaS{\J=Vrai}{\A=Faux} \probaS{\A=Faux}{\C,\T=Faux} \proba{\T=Faux}
+}
+
+\clearpage
+
+\section{Question 3: Sum Product}
+
+L'algorithme \emph{sum-product} a été implanté dans le package \inPy{FactorGraph.py}. Je présenterai dans un premier temps les structures de données que j'ai utilisé puis la propagation des messages au sein du réseau durant la compilation, enfin le calcul des messages effectué par les noeuds.
+
+\subsection*{Architecture et structure de données}
+
+Les noeuds d'un \emph{Factor Graph}, qu'ils représentent une variable aléatoire ou une fonction, partagent tous le même mécanisme de propagation de message. C'est donc la classe mère \inPy{Node} en combinaison avec la classe \inPy{Message} qui se chargeront de ce mécanisme (voir figure~\ref{fig:uml}). L'ensemble des noeuds sont stockés dans un graphe \inPy{Graph} qui est chargé de superviser la compilation du réseau (via la méthode \inPy{compile()}), et donc le calcul des probabiltés (on retrouve la même interface \inPy{p(event, knowing)}).
+
+\imgW{uml.pdf}{Diagramme UML des structure de données}{fig:uml}{1}
+
+La méthode \inPy{graphFromBayesNet(bayesNet)} permet de convertir un réseau de Bayes en Graphes de Facteur (voir résultat en figure~\ref{fig:fg}):
+\pyFile{question3.py}{5}{13}
+\imgW{pyOut/q3Graph}{Graphes de Facteur}{fig:fg}{0.18}
+
+\subsection*{Compilation et propagation des messages}
+
+La compilation d'un graphe consiste en une boucle infinie qui passe en revue tous les noeuds pour générer tous les messages générable dans l'état actuel du réseau puis déclenche l'envoi de ces messages. Une version très simplifié de la méthode \inPy{compile()} pourrait donc être:
+\begin{Py}
+msgs = []
+for node in self.varNodes + self.fctNodes:
+    node.processMsgs(msgs)
+  
+while msgs:
+    for m in msgs
+        m.send()
+    
+    msgs = []
+    for node in self.varNodes + self.fctNodes:
+        node.processMsgs(msgs)
+        
+for node in self.varNodes + self.fctNodes:
+    node.finishJob(msgs)
+\end{Py}
+
+Puisque lorsqu'il est construit, un message à connaissance de son destinataire \inPy{toNode}, il est capable de déclencher son envoi:
+\pyFile{FactorGraph.py}{22}{23}
+
+La méthode \inPy{receiveMsg} de la classe \inPy{Node} prend alors le relai et stocke le dit message dans \inPy{receivedMsgs} à l'index du noeud émetteur. Elle mets ensuite à jour les compteurs de réception de messages de tous les autres noeuds:
+\pyFile{FactorGraph.py}{107}{113}
+
+Ces compteurs de réception sont ensuite utilisés dans la méthode \inPy{Node.processMsgs(msgs)} pour savoir si un message peut être envoyé ou non: plus précisément si le compteur de réception associé à un noeud voisin est supérieur ou égal au nombre de voisin -1, alors un message doit être envoyé à ce noeud. Une fois envoyé le compteur est décrémenté aux nombres de voisins -2 de tel sorte que le prochain message reçu déclenche la réémission d'un message vers ce voisin.
+
+\pyFile{FactorGraph.py}{114}{132}
+Dans cette implémentation \inPy{hasConverged} et \inPy{makeAssumption} permettent la gestion des réseaux cycliques que nous ne détaillerons pas ici.
+
+On peut donc dorénavant compiler notre réseau et suivre la propagation des messages. On constate que les messages envoyés correspondent bien à ceux attendus et présenté dans le cours. La trace des message est de la forme \inPy{emmetteur -> destinataire: valeur}, et les nombres tout à gauche correspondent au compteur de tour de la boucle principale de \inPy{compile()}.
+
+\pyFile{question3.py}{15}{15}
+\outPy{1:\TAB	M -> f(A,M): [1, 1] \\
+\TAB\ \	J -> f(A,J): [1, 1] \\
+\TAB\ \	f(C) -> C: [0.001, 0.999] \\
+\TAB\ \	f(T) -> T: [0.002, 0.998] \\
+  \\
+2:\TAB	C -> f(C,T,A): [0.001, 0.999] \\
+\TAB\ \	T -> f(C,T,A): [0.002, 0.998] \\
+\TAB\ \	f(A,M) -> A: [1.0, 1.0] \\
+\TAB\ \	f(A,J) -> A: [1.0, 1.0] \\
+  \\
+3:\TAB	A -> f(C,T,A): [1.0, 1.0] \\
+\TAB\ \	f(C,T,A) -> A: [0.0025164419999999998, 0.99748355799999999]}
+\outPy{
+4:\TAB	A -> f(A,M): [0.0025164419999999998, 0.99748355799999999] \\
+\TAB\ \	A -> f(A,J): [0.0025164419999999998, 0.99748355799999999] \\
+\TAB\ \	f(C,T,A) -> C: [1.0, 0.99999999999999989] \\
+\TAB\ \	f(C,T,A) -> T: [1.0, 1.0] \\
+\\
+5:\TAB	C -> f(C): [1.0, 0.99999999999999989] \\
+\TAB\ \	T -> f(T): [1.0, 1.0] \\
+\TAB\ \	f(A,M) -> M: [0.052138975700000006, 0.94786102429999997] \\
+\TAB\ \	f(A,J) -> J: [0.011736344980000001, 0.98826365502000002]}
+
+\subsection*{Calcul de la valeur d'un message}
+
+L'une des lignes les plus importantes de la méthode \inPy{Node.processMsgs()} est certainement:
+
+\pyFile{FactorGraph.py}{123}{123}
+
+Cette ligne appele la fonction \inPy{Node.computeMsgData(msg)} pour affecter au message sa valeur. Cette méthode est redéfinie dans \inPy{VariableNode} et dans \inPy{FunctionNode} pour permettre un comportement différent pour ces deux types de noeuds. Ainsi les \inPy{VariableNode} devront renvoyer le produit des messages reçus depuis les autres noeuds. Quant à elles, les \inPy{FunctionNode} doivent en plus multiplier ce produit par la valeur de la fonction puis sommer les résulats.
+
+Une version simplifié de \inPy{FunctionNode.computeMsgData(msg, knowing)}:
+\begin{Py}
+spData = []
+for valueId in msg.toNode.valuesId():
+    # Pour chaque valeur de la variable du noeud destinataire
+    sp = 0
+    
+    # on somme selon l'evenement joint:
+    event = (msg.toNode.var == valueId) & knowing
+    
+    for e in event.listVecEvents(self.neighboursBase):
+        spTemp = self.f(e)
+	for i, m in enumerate(self.msgsReceived):
+	    if m is None or (m.fromNode is msg.toNode):
+                continue # On saute le noeud destinataire
+	    # On multiplie la valeur du message correspondant a l'evenement atomique
+	    spTemp *= m.spData[e[i]]
+	
+        sp += spTemp
+    spData.append(sp)
+msg.spData = spData
+
+msg.spData = spData
+\end{Py}
+
+En réalité la méthode \inPy{FunctionNode.computeMsgData(msg, knowing)} tel qu'implémentée dans le package \inPy{FactorGraph.py} est plus complexe. Elle supporte le calcul dans un espace logarithmique, le calcul d'un message alors que tous les noeuds voisins n'ont pas encore transmis le leur (pour gérer les graphes cycliques), ainsi que l'algorithme \emph{Max-Sum}...
+
+Une version simplifié de \inPy{VariableNode.computeMsgData(msg)}:
+\begin{Py}
+spData = []
+for valueId in self.valuesId():
+    # Pour chaque valeur de la variable du noeud
+    sp = 1  # on calcule le produit des messages
+    for m in self.msgsReceived:
+        if m is None or (m.fromNode is msg.toNode):
+            continue # On saute le noeud destinataire
+        sp *= m.spData[valueId]
+    spData.append(sp)
+
+msg.spData = spData
+\end{Py}
+
+\subsection*{Finalisation et lecture des probabilités}
+Une fois que tous les messages ont été transmis, on peut simplement lire la probabilité marginale d'une variable en multipliant tous les messages que sont noeud à reçus ou envoyés. Ou de manière plus optimal multiplier le message envoyé à une fonction par le message reçu de cette fonction. Dans le cas de probabilité conditionnelle, il faut en plus normalisé la valeur des probabilités obtenues pour que leur somme soit égales à 1. Cette tâche est répartie entre la méthode \inPy{Node.finishJob()} et \inPy{Graph.probaMarginal(var, value, knowing=None, conditional=True)} elle même appeler par la méthode \inPy{Graph.p(event, knowing)}. Le fonctionnement de ces méthodes ne sera pas étudié en détail dans ce rapport, leur enjeux étant de gérer de manière optimale le calcul de probabiltés marginales, conditionnelles, marginales conditionnelles et quelconques...
+
+\clearpage
+\subsection*{Validation de l'algorithme}
+Pour finir, on peut vérifier la validité de l'algorithme en calculant les probabilités déjà évaluées à la question précédente:
+\pyFile{question3.py}{15}{24}
+\outPy{p(C=True|M=True \& J=False) = 0.513\% \\
+p(C=True|M=False \& J=True) = 0.688\% \\
+p(C=True|M=True \& J=True) = 28.417\% \\
+p(C=True|M=False \& J=False) = 0.009\% \\
+p(C=True|M=True) = 1.628\% \\
+p(C=True|J=True) = 5.612\% \\
+p(C=True) = 0.1\% \\
+p(T=True) = 0.2\% \\
+p(A=True) = 0.252\% \\
+p(M=True) = 5.214\% \\
+p(J=True) = 1.174\%}
+
+\vspace{2em}
+Au niveau de la précision numérique, les résultats de l'algorithme de sum-product sont similaires à ceux obtenus avec la méthode brutale. Bien sur, la complexité du calcul est plus faible avec cet algorithme qu'avec la méthode brutale. Nottament lorsqu'on ajoute, une à une, des observations sur le graphe: lorsque les phénomènes de \emph{Serial Blocking} ou de \emph{Divergent Blocking}
+\clearpage
+%_______________________________________________________%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Le package: \emph{probatoolbox.py}}
+\label{probatoolbox}
+
+\section{Le package: \emph{BayesNetwork.py}}
+\label{bayesNetwork}
+Le package \inPy{BayesNetwork} contient une classe \inPy{Network} qui représente notre réseau (un ensemble de \inPy{VariableNode}). L'ajout de noeud à un \inPy{Network} est réalisé par l'appel de la méthode \inPy{createNode(nom, CPD, parents=[])} qui renvoie une référence vers la variable aléatoire construite. Le paramètre \inPy{CPD} prend la forme d'un tableau contenant la probabilité conditionnelle que la variable soit vrai sachant la valeur de ses parents (la probabilité complémentaire est inférée). Le premier élément est la probabilité sachant que tous les parents sont vrais, la deuxième que seul le premier parent est faux, puis seul le deuxième puis seul les deux premiers et ainsi de suite en suivant une incrémentation binaire.
+
+
+\end{document}
